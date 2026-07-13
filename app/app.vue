@@ -1,25 +1,50 @@
 <template>
   <div>
     <NuxtRouteAnnouncer />
-    <input type="text" v-model="model"></input>
-    <button @click="">Envoyer</button>
-    <div v-for="msg in conv">
-      {{ msg }}
+    <div class="flex flex-col">
+      <Tchatbox :conv="conv"></Tchatbox>
+      <div class="flex gap-5">
+        <UInput type="text" v-model="model"></UInput>
+        <UButton @click="sendMessage">Envoyer</UButton>
+      </div>
+
     </div>
+
   </div>
 </template>
 
 
 <script setup lang="ts">
+import Tchatbox from './components/tchatbox.vue'
+import type { Message } from './types/chat'
+
 const { $socket } = useNuxtApp()
-const model =  defineModel<string>()
- 
-const conv = ref<string[]>([])
+const model = defineModel<string>()
+
+const conv = ref<Message[]>([])
 
 onMounted(() => {
-  console.log("coucou")
-  $socket.emit("hello", "je suis connecté !" + $socket.id)
+
+  $socket.on("connect", () => {
+    $socket.emit("hello", "je suis connecté !" + $socket.id)
+
+    $socket.on("receivemessage", (data: Message) => {
+      console.log('message reçu client', data)
+      conv.value.push(data)
+    })
+  })
+
+
 })
+
+const sendMessage = () => {
+  if ($socket && model.value !== "") {
+    $socket.emit("sendmessage", $socket.id, model.value, Date.now())
+  }
+
+}
+
+
 
 
 </script>
