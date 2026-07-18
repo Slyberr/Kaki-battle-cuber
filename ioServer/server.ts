@@ -1,7 +1,9 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
+import express from "express";
 
-const httpServer = createServer();
+const app = express()
+const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
@@ -9,16 +11,17 @@ const io = new Server(httpServer, {
   },
 });
 
+app.get("/api/create/room", (req,res) => {
+  res.send("hello")
+})
+
+
 io.on("connection", (socket) => {
   console.log("Nouvel utilisateur !" ,socket.id);
 
   socket.on("disconnect", () => {
     console.log("l'utilisateur ", socket.id, " a été déconnecté")
   } )
-
-  socket.on("hello", (arg) => {
-    console.log(arg)
-  })
 
   socket.on("sendmessage", (id,data,date) => {
     

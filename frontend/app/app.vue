@@ -1,50 +1,58 @@
 <template>
   <div>
     <NuxtRouteAnnouncer />
-    <div class="flex flex-col">
-      <Tchatbox :conv="conv"></Tchatbox>
-      <div class="flex gap-5">
-        <UInput type="text" v-model="model"></UInput>
-        <UButton @click="sendMessage">Envoyer</UButton>
-      </div>
-
+    <UPageHero title="Bienvenue sur KBC!"
+      description="Kaki-battle-cuber vous permet de créer une room privée instantanément, sans compte ! Affrontez vos amis sur des épreuves officielles, ou non !"
+      headline="v0.1">
+    <UModal>
+      <div class="flex justify-center">
+      <UButton class="relative" icon="lucide:plus" @click=""">Créer une nouvelle room</UButton>
     </div>
+      <template #content>
+        <UForm :schema="schema" :state="state" class="m-8 space-y-4" @submit="createRoom">
+          <UFormField label="Nom de la salle" name="roomname">
+            <UInput v-model="state.roomname"></UInput>
+          </UFormField>
+          <UFormField label="Mot de passe" name="password">
+            <UInput type="password" v-model="state.password"></UInput>
+          </UFormField>
+          <UButton type="submit">Accéder à la salle</UButton>
+        </UForm>
+      </template>
 
+      
+    </UModal>
+
+    </UPageHero>
+
+    
   </div>
 </template>
 
 
 <script setup lang="ts">
-import Tchatbox from './components/tchatbox.vue'
-import type { Message } from './types/chat'
 
-const { $socket } = useNuxtApp()
-const model = defineModel<string>()
+import * as v from 'valibot'
 
-const conv = ref<Message[]>([])
-
-onMounted(() => {
-
-  $socket.on("connect", () => {
-    $socket.emit("hello", "je suis connecté !" + $socket.id)
-
-    $socket.on("receivemessage", (data: Message) => {
-      console.log('message reçu client', data)
-      conv.value.push(data)
-    })
-  })
-
-
+const schema = v.object({
+  roomname: v.pipe(v.string(), v.minLength(4, "Le nom doit au moins dépasser 3 caractères")),
+  password: v.pipe(v.string(), v.minLength(4, "le mot de passe doit faire au moins 4 caractères")),
 })
 
-const sendMessage = () => {
-  if ($socket && model.value !== "") {
-    $socket.emit("sendmessage", $socket.id, model.value, Date.now())
+const state = ref({
+  roomname: "",
+  password: ""
+})
+
+
+const createRoom = async() => {
+ await $fetch('http://localhost:3001/api/create/room', {
+  method : "POST",
+  body: {roomname : state.value.roomname, password : state.value.password},
+  headers: {
+    'Content-Type' :'application/json'
   }
-
+ })
 }
-
-
-
 
 </script>
