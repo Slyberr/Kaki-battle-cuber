@@ -15,9 +15,9 @@
 
 <script setup lang="ts">
 import { io } from 'socket.io-client';
-import TabBattle from './components/tabBattle.vue'
-import Tchatbox from './components/tchatbox.vue'
-import type { Message } from './types/chat'
+import TabBattle from '../../components/tabBattle.vue'
+import Tchatbox from '../../components/tchatbox.vue'
+import type { Message } from '../../types/chat.js'
 
 
 const model = defineModel<string>()
