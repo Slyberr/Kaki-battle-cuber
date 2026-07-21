@@ -66,7 +66,6 @@
 
 <script setup lang="ts">
 
-import { io, Socket } from 'socket.io-client';
 import * as v from 'valibot'
 
 const allrooms = ref([])
@@ -89,9 +88,8 @@ const stateJoin = ref({
 })
 
 const errorToast = useToast()
-let socket: Socket | null = null;
+let socket = useSocket()
 onMounted(() => {
-  socket = io("http://localhost:3001");
   socket.on("connect", () => {
 
     socket?.on("error", (data) => {
@@ -104,8 +102,8 @@ onMounted(() => {
 
     })
 
-    socket?.on("go-to-room", (uuid) => {
-      navigateTo('/room/' + uuid)
+    socket?.on("go-to-room", (roomName) => {
+      navigateTo('/room/' + roomName)
     })
     socket?.on('get-rooms', (therooms) => {
       allrooms.value = therooms

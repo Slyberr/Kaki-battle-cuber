@@ -2,15 +2,13 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import express from "express";
 import cors from "cors";
-import { randomUUID } from "crypto";
+
 
 export type player = {
   id: String;
-  name: String;
+  pseudo: String;
   owner: Boolean;
 };
-
-
 
 const app = express();
 
@@ -33,62 +31,97 @@ const io: Server = new Server(httpServer, {
   },
 });
 
-const rooms: Map<string, { id: string,password: string; players: player[] }> = new Map();
+const rooms: Map<string, {password: string; players: player[] }> =
+  new Map();
 
 io.on("connection", (socket) => {
   console.log("Nouvel utilisateur !", socket.id);
-  const newarray = Array.from(rooms.keys())
-  console.log(newarray)
-  socket.emit("get-rooms",newarray)
+
+  //Envoie les noms de toutes les rooms existantes pour home.vue
+  const roomsChoice = Array.from(rooms.keys());
+  socket.emit("get-rooms", roomsChoice);
+
   socket.on("disconnect", () => {
-    console.log("l'utilisateur ", socket.id, " a été déconnecté");
+    //On retire le joueur de toutes les rooms (normalement qu'une seule )
+    //du serveur
+    let indexToRemove = 0;
+    rooms.forEach((value) => {
+      //Ici ça ne fonctionne qu'une seule fois car un joueur = une seule room
+      value.players.forEach((value, index) => {
+        if (value.id === socket.id) {
+          indexToRemove = index;
+        }
+      });
+      value.players.splice(indexToRemove, 1);
+    });
+    console.log(socket.id, " a été déconnecté");
   });
 
-  socket.on("sendmessage", (id, data, date) => {
-    io.emit("receivemessage", { id, data, date });
-  });
+  // socket.on("sendmessage", (id, data, date) => {
+  //   io.emit("receivemessage", { id, data, date });
+  // });
 
+  //Création de room
   socket.on(
     "create-room",
     (room: { roomName: string; password: string; pseudo: string }) => {
-      
       if (!rooms.get(room.roomName)) {
-        const uuid = randomUUID()
+
+        //Rejoindre la room socket.io et créer en parallèle pour y attacher des infos
         socket.join(room.roomName);
         rooms.set(room.roomName, {
-          id : uuid,
           password: room.password,
-          players: [{id: socket.id, name: room.pseudo, owner: true }],
+          players: [{ id: socket.id, pseudo: room.pseudo, owner: true }],
         });
-        socket.emit("go-to-room",uuid)
+        socket.emit("go-to-room", room.roomName);
+
+        //Quand un nouveau joueur arrive (event que pour les joueurs déjà présents)
+        io.to(room.roomName).emit("new-player", rooms.get(room.roomName)?.players );
+
       } else {
         socket.emit("error", "Une room de ce nom existe déjà !");
       }
     },
   );
 
+  //Rejoindre une room
   socket.on(
     "join-room",
-    (room: { roomName: string; password: string; pseudo: string }) => {
-      const theRoom = rooms.get(room.roomName);
-      if (theRoom && theRoom.password !== room.password) {
+    (info: { roomName: string; password: string; pseudo: string }) => {
+      const room = rooms.get(info.roomName);
+
+      if (room && room.password !== info.password) {
         socket.emit("error", "mot de passe incorrect !");
       } else if (
-        theRoom &&
-        theRoom.players.some((player) => player.name === room.pseudo)
+        room &&
+        room.players.some((player) => player.pseudo === info.pseudo)
       ) {
         socket.emit("error", "Le pseudo est déjà pris !");
-      } else if (theRoom) {
-        theRoom.players.push({
+      } else if (room) {
+        room.players.push({
           id: socket.id,
-          name: room.pseudo,
+          pseudo: info.pseudo,
           owner: false,
         });
-        socket.join(room.roomName);
-        socket.emit("go-to-room",rooms.get(room.roomName)?.id)
+        socket.join(info.roomName);
+
+        //Redirection sur room/[id].vue
+        socket.emit("go-to-room", info.roomName);
+
+        //Quand un nouveau joueur arrive (event que pour les joueurs déjà présents)
+        io.to(info.roomName).emit("new-player", room.players);
       }
     },
   );
+
+  //A l'arrivé dans room/[id].vue, on demande les data directement
+  socket.on("i-want-room-data", (roomName) => {
+    const room = rooms.get(roomName);
+    if (room) {
+      //Joueurs, temps réalisés...
+      socket.emit("send-all-room-data",room.players)
+    }
+  });
 });
 
 httpServer.listen(3001, () => {
