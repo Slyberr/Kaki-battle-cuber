@@ -4,8 +4,8 @@
   <div class="flex flex-col">
     {{ roomName }}
 
-
-    <TabBattle :players="players"></TabBattle>
+    
+    <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers"></TabBattle>
     <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
         <UInput type="text" v-model="model"></UInput>
@@ -19,14 +19,13 @@
 <script setup lang="ts">
 import { io, Socket } from 'socket.io-client';
 import TabBattle from '../../components/tabBattle.vue'
-import Tchatbox from '../../components/tchatbox.vue'
 import type { Message } from '../../types/chat.js'
 
 
 const route = useRoute()
 const socket: Socket = useSocket()
 const roomName = ref(route.params.id)
-const players = ref("")
+const roomPlayers = ref([])
 
 const model = defineModel<string>()
 const conv = ref<Message[]>([])
@@ -34,14 +33,13 @@ const conv = ref<Message[]>([])
 socket.emit("i-want-room-data", roomName.value);
 
 //Cela permet d'initialiser toutes les données nécessaires.
-socket.on("send-all-room-data", (player) => {
-  console.log('hello')
-  players.value = player
+socket.on("send-all-room-data", (players: []) => {
+  roomPlayers.value = players
 })
 
 //Cela permet de mettre à jour quand un nouveau joueur arrive.
-socket.on("new-player", (player) => {
-  players.value = player
+socket.on("new-player", (players) => {
+  roomPlayers.value = players
 })
 
 
