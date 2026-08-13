@@ -1,6 +1,7 @@
 <template>
     {{ props.players }}
     <UTable :columns="colonnes" :data="donnees"></UTable>
+    <UButton @click="fakeTime()">Generate fake time</UButton>
 </template>
 
 
@@ -15,7 +16,7 @@ interface Solve {
     test: number;
     [playerName: string]: any;
 }
-
+const currentSolve = ref(1)
 const colonnes = computed<TableColumn<Solve>[]>(() => {
 
     const mainColumns = [
@@ -36,28 +37,22 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
 
 })
 
-
-
-
-
-
-
-
-
 const donnees = ref<Solve[]>([
     { num: 1, test: 12.22 },
 ])
 
-const solves = ref([
-    {
-        'n°': 1,
-        'joueur1': '15.10',
-        'joueur2': '15.00+',
-        'joueur3': 'DNF(9.99)'
-    },
-
-
-])
+const fakeTime = () => {
+    currentSolve.value++
+    const solve : Solve = {
+        num : currentSolve.value,
+        test : 12.30
+    }
+     for (let player of props.players) {
+        const rand = Math.random() * 100
+        solve[player.id] = rand
+    }
+    donnees.value.push(solve)
+}
 
 
 </script>

@@ -4,7 +4,7 @@
   <div class="flex flex-col">
     {{ roomName }}
 
-    
+    <Timer/>
     <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers"></TabBattle>
     <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
