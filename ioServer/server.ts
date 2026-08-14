@@ -8,7 +8,6 @@ export type player = {
   id: String;
   pseudo: String;
   owner: Boolean;
-  times : {id : number, time: string}[];
   state : "READY" | "SCORE"
 };
 
@@ -33,8 +32,10 @@ const io: Server = new Server(httpServer, {
   },
 });
 
-const rooms: Map<string, {password: string; players: player[] }> =
+const rooms: Map<string, {password: string; players: player[], currentScores : Record<string,any> }> =
   new Map();
+
+
 
 io.on("connection", (socket) => {
   console.log("Nouvel utilisateur !", socket.id);
@@ -57,7 +58,6 @@ io.on("connection", (socket) => {
       });
       room.players.splice(indexToRemove, 1);
     });
-    console.log(rooms.get(onXRoom)?.players )
     io.to(onXRoom).emit("remove-player", rooms.get(onXRoom)?.players );
     console.log(socket.id, " a été déconnecté");
   });
@@ -76,7 +76,8 @@ io.on("connection", (socket) => {
         socket.join(room.roomName);
         rooms.set(room.roomName, {
           password: room.password,
-          players: [{ id: socket.id, pseudo: room.pseudo, owner: true, state : "READY" , times : []}],
+          players: [{ id: socket.id, pseudo: room.pseudo, owner: true, state : "READY"}],
+          currentScores : {}
         });
         socket.emit("go-to-room", room.roomName);
 
@@ -108,7 +109,6 @@ io.on("connection", (socket) => {
           pseudo: info.pseudo,
           owner: false,
           state : "READY",
-          times : []
         });
         socket.join(info.roomName);
 
@@ -131,17 +131,28 @@ io.on("connection", (socket) => {
   });
 
   socket.on("save-time", (info : {roomName : string;time : string; playerId : string, solveId : number}) => {
-      const room = rooms.get(info.roomName)
-      const player = room?.players.filter((player) => player.id === info.playerId)
-      if (player?.length === 1) {
-        player[0].times.push({id : info.solveId, time : info.time})
-        player[0].state = "SCORE"
-        console.log(player[0].times, room?.players)
-        if (room!.players.filter((player) => player.state !== "SCORE").length === 0) {
-          console.log("tous le monde a fini")
-          room!.players.map((player)=> player.state = "READY")
-          io.to(info.roomName).emit("nextSolve")
 
+      const room = rooms.get(info.roomName)
+      const player = room?.players.find((player) => player.id === info.playerId)
+      if (player) {
+
+        let  getRoom = rooms.get(info.roomName)!
+        if (Object.keys(getRoom.currentScores).length === 0) {
+          getRoom.currentScores = {"num" :info.solveId,"roomID" : info.roomName,[info.playerId] : info.time}
+        } else {
+          getRoom.currentScores[info.playerId] = info.time
+        }
+        rooms.set(info.roomName,getRoom)
+        player.state = "SCORE"
+
+        if (!room!.players.find((player) => player.state !== "SCORE")) {
+          room!.players.map((player)=> player.state = "READY")
+
+          io.to(info.roomName).emit("nextSolve",getRoom?.currentScores)
+          
+          //Delete the current score in this ROOM.
+          getRoom.currentScores = {}
+          rooms.set(info.roomName,getRoom)
         }
       }
   } )

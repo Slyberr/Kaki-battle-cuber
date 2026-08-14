@@ -5,7 +5,7 @@
     Vous êtes {{ me.pseudo }}
 
     <Timer @time-ok="(time : string)  => sendTime(time)" @player-running="() => playerState = 'RUNNING'" :player-state="playerState""/>
-    <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :solve-id="solveID"></TabBattle>
+    <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="times" :solve-id="solveID"></TabBattle>
     <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
         <UInput type="text" v-model="model"></UInput>
@@ -26,6 +26,7 @@ const route = useRoute()
 const socket: Socket = useSocket()
 const roomName = ref(route.params.id)
 const roomPlayers = ref([])
+const times = ref<any[]>([])
 const me = ref()
 const playerState = ref<"READY" | "RUNNING" | "SCORE">("READY")
 
@@ -51,10 +52,11 @@ socket.on("remove-player", (players) => {
   roomPlayers.value = players
 })
 
-socket.on("nextSolve", () => {
+socket.on("nextSolve", (scores : any) => {
   solveID.value += 1
   playerState.value = "READY"
-
+  console.log(scores)
+  times.value.push(scores)
 })
 
 const sendTime = (time : string) => {

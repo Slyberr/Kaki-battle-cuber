@@ -1,5 +1,5 @@
 <template>
-    <UTable :columns="colonnes" :data="donnees"></UTable>
+    <UTable :columns="colonnes" :data=" props.times"></UTable>
 </template>
 
 
@@ -7,11 +7,10 @@
 import type { TableColumn } from '@nuxt/ui'
 
 
-const props = defineProps<{ players: any[], solveId : number }>()
+const props = defineProps<{ players: any[],times: any, solveId : number }>()
 
 interface Solve {
     num: number;
-    test: number;
     [playerName: string]: any;
 }
 const currentSolve = ref(1)
@@ -22,10 +21,7 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
             accessorKey: 'num',
             header: 'n°'
         },
-        {
-            accessorKey: 'test',
-            header: "headerTest"
-        }
+        
     ]
     for (let player of props.players) {
         mainColumns.push({ accessorKey: player.id, header: player.pseudo })
@@ -35,8 +31,6 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
 
 })
 
-const donnees = ref<Solve[]>([
-    { num: 1, test: 12.22 },
-])
+
 
 </script>
