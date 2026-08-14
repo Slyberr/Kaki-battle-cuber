@@ -32,10 +32,7 @@ const io: Server = new Server(httpServer, {
   },
 });
 
-const rooms: Map<string, {password: string; players: player[], currentScores : Record<string,any> }> =
-  new Map();
-
-
+const rooms: Map<string, {password: string; players: player[], currentScores : Record<string,any> }> = new Map();
 
 io.on("connection", (socket) => {
   console.log("Nouvel utilisateur !", socket.id);
@@ -59,6 +56,11 @@ io.on("connection", (socket) => {
       room.players.splice(indexToRemove, 1);
     });
     io.to(onXRoom).emit("remove-player", rooms.get(onXRoom)?.players );
+
+    //special case : everyone submit his time but last one leave
+    if (!rooms.get(onXRoom)?.players.find((player) => player.state === 'READY')) {
+      io.to(onXRoom).emit("nextSolve",rooms.get(onXRoom)?.currentScores)
+    }
     console.log(socket.id, " a été déconnecté");
   });
 
@@ -134,6 +136,7 @@ io.on("connection", (socket) => {
 
       const room = rooms.get(info.roomName)
       const player = room?.players.find((player) => player.id === info.playerId)
+
       if (player) {
 
         let  getRoom = rooms.get(info.roomName)!
