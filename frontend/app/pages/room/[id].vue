@@ -1,6 +1,11 @@
 <template>
 
-  <UHeader title="KakiBattle"></UHeader>
+  <UHeader title="KakiBattle">
+    <template #left>
+      <UButton color="primary" variant="ghost" label="Retour" to="/home?return=yes" icon="lucide:arrow-left"/>
+    </template>
+    <template #body><p>KakiTimer</p></template>
+  </UHeader>
   <div v-if ="me"class="flex flex-col">
     Vous êtes {{ me.pseudo }}
 
@@ -33,6 +38,16 @@ const playerState = ref<"READY" | "RUNNING" | "SCORE">("READY")
 const solveID = ref(1)
 const model = defineModel<string>()
 const conv = ref<Message[]>([])
+
+definePageMeta({
+ middleware : [
+  function(to,from) {
+    if (from.path !== '/home') {
+      return navigateTo('/home', { redirectCode: 301 })
+    } 
+  }
+ ]
+})
 
 socket.emit("i-want-room-data", roomName.value);
 

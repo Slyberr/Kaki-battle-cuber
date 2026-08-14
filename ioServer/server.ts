@@ -41,7 +41,7 @@ io.on("connection", (socket) => {
   const roomsChoice = Array.from(rooms.keys());
   socket.emit("get-rooms", roomsChoice);
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
     //remove player from his room
     let indexToRemove = 0;
     let onXRoom = "" 
@@ -57,11 +57,11 @@ io.on("connection", (socket) => {
     });
     io.to(onXRoom).emit("remove-player", rooms.get(onXRoom)?.players );
 
-    //special case : everyone submit his time but last one leave
+    //special case : everyone submit his time but last one disconnected.
     if (!rooms.get(onXRoom)?.players.find((player) => player.state === 'READY')) {
       io.to(onXRoom).emit("nextSolve",rooms.get(onXRoom)?.currentScores)
     }
-    console.log(socket.id, " a été déconnecté");
+    console.log(socket.id, " a été déconnecté \n Raison: ", reason);
   });
 
   // socket.on("sendmessage", (id, data, date) => {

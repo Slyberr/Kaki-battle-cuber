@@ -87,7 +87,25 @@ const stateJoin = ref({
   pseudo: "",
 })
 
+definePageMeta({
+ middleware : [
+  function(to,from) {
+    console.log(from)
+    if (from.path.includes('/room/') && !to.query.return) {
+      const redirectToast = useToast()
+      redirectToast.add({
+        title: "Redirection",
+        description: "Vous avez tenté de joindre la salle via une URL. \n Veuillez utiliser le bouton 'Rejoindre une room.'",
+        duration : 10000
+      })
+    } 
+  }
+ ]
+})
+
+
 const errorToast = useToast()
+
 let socket = useSocket()
 onMounted(() => {
   socket.on("connect", () => {
