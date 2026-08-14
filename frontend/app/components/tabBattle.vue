@@ -1,7 +1,5 @@
 <template>
-    {{ props.players }}
     <UTable :columns="colonnes" :data="donnees"></UTable>
-    <UButton @click="fakeTime()">Generate fake time</UButton>
 </template>
 
 
@@ -9,7 +7,7 @@
 import type { TableColumn } from '@nuxt/ui'
 
 
-const props = defineProps<{ players: any[] }>()
+const props = defineProps<{ players: any[], solveId : number }>()
 
 interface Solve {
     num: number;
@@ -40,19 +38,5 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
 const donnees = ref<Solve[]>([
     { num: 1, test: 12.22 },
 ])
-
-const fakeTime = () => {
-    currentSolve.value++
-    const solve : Solve = {
-        num : currentSolve.value,
-        test : 12.30
-    }
-     for (let player of props.players) {
-        const rand = Math.random() * 100
-        solve[player.id] = rand
-    }
-    donnees.value.push(solve)
-}
-
 
 </script>

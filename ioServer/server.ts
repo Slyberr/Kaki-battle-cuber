@@ -8,6 +8,8 @@ export type player = {
   id: String;
   pseudo: String;
   owner: Boolean;
+  times : {id : number, time: string}[];
+  state : "READY" | "SCORE"
 };
 
 const app = express();
@@ -37,23 +39,26 @@ const rooms: Map<string, {password: string; players: player[] }> =
 io.on("connection", (socket) => {
   console.log("Nouvel utilisateur !", socket.id);
 
-  //Envoie les noms de toutes les rooms existantes pour home.vue
+  //Send all room name for home.vue
   const roomsChoice = Array.from(rooms.keys());
   socket.emit("get-rooms", roomsChoice);
 
   socket.on("disconnect", () => {
-    //On retire le joueur de toutes les rooms (normalement qu'une seule )
-    //du serveur
+    //remove player from his room
     let indexToRemove = 0;
-    rooms.forEach((value) => {
-      //Ici ça ne fonctionne qu'une seule fois car un joueur = une seule room
-      value.players.forEach((value, index) => {
+    let onXRoom = "" 
+    rooms.forEach((room,roomKey) => {
+      //a player have only one room
+      room.players.forEach((value, index) => {
         if (value.id === socket.id) {
           indexToRemove = index;
+          onXRoom = roomKey
         }
       });
-      value.players.splice(indexToRemove, 1);
+      room.players.splice(indexToRemove, 1);
     });
+    console.log(rooms.get(onXRoom)?.players )
+    io.to(onXRoom).emit("remove-player", rooms.get(onXRoom)?.players );
     console.log(socket.id, " a été déconnecté");
   });
 
@@ -61,21 +66,21 @@ io.on("connection", (socket) => {
   //   io.emit("receivemessage", { id, data, date });
   // });
 
-  //Création de room
+  //Create room
   socket.on(
     "create-room",
     (room: { roomName: string; password: string; pseudo: string }) => {
       if (!rooms.get(room.roomName)) {
 
-        //Rejoindre la room socket.io et créer en parallèle pour y attacher des infos
+        //Create socket.io Room and a room 
         socket.join(room.roomName);
         rooms.set(room.roomName, {
           password: room.password,
-          players: [{ id: socket.id, pseudo: room.pseudo, owner: true }],
+          players: [{ id: socket.id, pseudo: room.pseudo, owner: true, state : "READY" , times : []}],
         });
         socket.emit("go-to-room", room.roomName);
 
-        //Quand un nouveau joueur arrive (event que pour les joueurs déjà présents)
+        //when a new player come (event for players already in room)
         io.to(room.roomName).emit("new-player", rooms.get(room.roomName)?.players );
 
       } else {
@@ -84,7 +89,7 @@ io.on("connection", (socket) => {
     },
   );
 
-  //Rejoindre une room
+  //join a room
   socket.on(
     "join-room",
     (info: { roomName: string; password: string; pseudo: string }) => {
@@ -102,19 +107,21 @@ io.on("connection", (socket) => {
           id: socket.id,
           pseudo: info.pseudo,
           owner: false,
+          state : "READY",
+          times : []
         });
         socket.join(info.roomName);
 
-        //Redirection sur room/[id].vue
+        //redirect on room/[id].vue
         socket.emit("go-to-room", info.roomName);
 
-        //Quand un nouveau joueur arrive (event que pour les joueurs déjà présents)
+        //when a new player come (event for players already in room)
         io.to(info.roomName).emit("new-player", room.players);
       }
     },
   );
 
-  //A l'arrivé dans room/[id].vue, on demande les data directement
+  //ask data immediatly when enter on room/[id].vue
   socket.on("i-want-room-data", (roomName) => {
     const room = rooms.get(roomName);
     if (room) {
@@ -122,6 +129,22 @@ io.on("connection", (socket) => {
       socket.emit("send-all-room-data",room.players)
     }
   });
+
+  socket.on("save-time", (info : {roomName : string;time : string; playerId : string, solveId : number}) => {
+      const room = rooms.get(info.roomName)
+      const player = room?.players.filter((player) => player.id === info.playerId)
+      if (player?.length === 1) {
+        player[0].times.push({id : info.solveId, time : info.time})
+        player[0].state = "SCORE"
+        console.log(player[0].times, room?.players)
+        if (room!.players.filter((player) => player.state !== "SCORE").length === 0) {
+          console.log("tous le monde a fini")
+          room!.players.map((player)=> player.state = "READY")
+          io.to(info.roomName).emit("nextSolve")
+
+        }
+      }
+  } )
 });
 
 httpServer.listen(3001, () => {
