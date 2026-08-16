@@ -32,8 +32,8 @@
         <UButton class="relative" icon="lucide:users">Rejoindre une room</UButton>
       </div>
       <template #content>
-        <p class="text-xl m-2">{{ allrooms.length }} Rooms actives</p>
-        <div class="flex" v-for="room in allrooms">
+        <p class="text-xl m-2">{{ (rooms as any[]).length }} Rooms actives</p>
+        <div class="flex" v-for="room in rooms">
 
           <UModal>
             <div class="flex justify-between w-full m-2">
@@ -68,7 +68,7 @@
 
 import * as v from 'valibot'
 
-const allrooms = ref([])
+const rooms = useState('rooms')
 
 const schema = v.object({
   roomname: v.pipe(v.string(), v.minLength(4, "Le nom doit au moins faire 4 caractères")),
@@ -89,6 +89,10 @@ const stateJoin = ref({
 
 let socket = useSocket()
 
+socket?.on("go-to-room", (roomName) => {
+      navigateTo('/room/' + roomName)
+    })
+
 definePageMeta({
   middleware: [
     function (to, from) {
@@ -104,33 +108,6 @@ definePageMeta({
       }
     }
   ]
-})
-
-
-const errorToast = useToast()
-
-
-onMounted(() => {
-  socket.on("connect", () => {
-
-    socket?.on("error", (data) => {
-      console.log(data, "ici")
-      errorToast.add({
-        title: "Erreur !",
-        description: data,
-
-      })
-
-    })
-
-    socket?.on("go-to-room", (roomName) => {
-      navigateTo('/room/' + roomName)
-    })
-    socket?.on('get-rooms', (therooms) => {
-      allrooms.value = therooms
-    })
-  })
-
 })
 
 const createRoom = async () => {

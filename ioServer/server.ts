@@ -4,8 +4,8 @@ import express from "express";
 import cors from "cors";
 
 export type player = {
-  id: String;
-  pseudo: String;
+  id: string;
+  pseudo: string;
   owner: Boolean;
   state: "READY" | "SCORE";
 };
@@ -45,29 +45,33 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", (reason) => {
     //remove player from his room
-    let indexToRemove = 0;
-    let onXRoom = "";
+    let indexToRemove: number | null = null;
+    let roomName = "";
     rooms.forEach((room, roomKey) => {
-      //a player have only one room
-      room.players.forEach((value, index) => {
+      //a player have 0 or 1 room
+      room.players.some((value, index) => {
         if (value.id === socket.id) {
           indexToRemove = index;
-          onXRoom = roomKey;
+          roomName = roomKey;
+          return true;
+        } else {
+          return false;
         }
       });
-      room.players.splice(indexToRemove, 1);
     });
 
-    //Stop display the disconnected player and update the room.
-    io.to(onXRoom).emit("remove-player", rooms.get(onXRoom)?.players);
+    if (indexToRemove !== null) {
+      leaveRoom(socket, roomName, socket.id, true);
+    }
 
     //special case : everyone submit his time but last one disconnected.
     if (
-      !rooms.get(onXRoom)?.players.find((player) => player.state === "READY")
+      roomName !== "" &&
+      !rooms.get(roomName)?.players.find((player) => player.state === "READY")
     ) {
-      io.to(onXRoom).emit("nextSolve", rooms.get(onXRoom)?.currentScores);
+      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.currentScores);
     }
-    console.log(socket.id, " a été déconnecté \n Raison: ", reason);
+    console.log("Aureveoir", socket.id, "\n Raison: ", reason);
   });
 
   // socket.on("sendmessage", (id, data, date) => {
@@ -137,22 +141,12 @@ io.on("connection", (socket) => {
   );
 
   //Leave a room (only one room by player)
-  socket.on("leave-room",(user : player, roomName : string) => {
-    socket.leave(roomName)
-    const room = rooms.get(roomName)!
-    const playerRemoved = room.players.filter((player) => player.id === user.id)
-    room!.players = playerRemoved
-
-    if (playerRemoved.length === 0 ) {
-      //Socket.io auto-deleting if no one left.
-      rooms.delete(roomName)
-    } else {
-      rooms.set(roomName,room)
-    }
-    //Stop display the leaver player and update the room.
-    io.to(roomName).emit("remove-player", rooms.get(roomName)?.players);
-    
-  })
+  socket.on("leave-room", (user: player, roomName: string) => {
+    leaveRoom(socket, roomName, user.id, false);
+    //Send all room name for home.vue
+    const roomsChoice = Array.from(rooms.keys());
+    socket.emit("get-rooms", roomsChoice);
+  });
   //ask data immediatly when enter on room/[id].vue
   socket.on("i-want-room-data", (roomName) => {
     const room = rooms.get(roomName);
@@ -202,6 +196,52 @@ io.on("connection", (socket) => {
     },
   );
 });
+
+/**
+ *
+ * @param mySocket
+ * @param roomName
+ * @param userID
+ * @param disconnected true if he leave or reload the page. false if he leaved because he want.
+ */
+const leaveRoom = (
+  mySocket: any,
+  roomName: string,
+  userID: string,
+  disconnected: boolean,
+) => {
+  if (!disconnected) {
+    mySocket.leave(roomName);
+  }
+
+  const room = rooms.get(roomName)!;
+  const playerRemoved = room.players.filter((player) => player.id !== userID);
+  room!.players = playerRemoved;
+
+  if (playerRemoved.length === 0) {
+    //Socket.io auto-deleting if no one left.
+    rooms.delete(roomName);
+    //Emit to EVERYONE the new list of room.
+    io.emit("get-rooms", Array.from(rooms.keys()));
+    console.log(
+      "Room",
+      roomName,
+      "supprimée. Etat des rooms :",
+      Array.from(rooms.keys()),
+    );
+  } else {
+    rooms.set(roomName, room);
+    console.log(
+      "Room",
+      roomName,
+      "conservée. Joueurs restants : "
+    );
+    room.players.forEach( (player) => console.log(player.pseudo))
+  }
+
+  //Stop display the leaver player and update the room.
+  io.to(roomName).emit("remove-player", rooms.get(roomName)?.players ?? []);
+};
 
 httpServer.listen(3001, () => {
   console.log("Realtime server listening on :3001");

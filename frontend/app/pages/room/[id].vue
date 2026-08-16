@@ -89,7 +89,7 @@ const sendTime = (time : string) => {
 }
 
 const leaveRoom = () => {
-  socket.emit("leave-room", me.value, roomName)
+  socket.emit("leave-room", me.value, roomName.value)
   return navigateTo("/home?return=yes")
 }
 
