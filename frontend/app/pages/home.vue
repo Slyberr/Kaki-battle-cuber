@@ -27,17 +27,17 @@
 
 
     <!--- Rejoindre une room-->
-    <UModal >
+    <UModal>
       <div class="flex justify-center">
         <UButton class="relative" icon="lucide:users">Rejoindre une room</UButton>
       </div>
       <template #content>
         <p class="text-xl m-2">{{ allrooms.length }} Rooms actives</p>
         <div class="flex" v-for="room in allrooms">
-         
-          <UModal >
+
+          <UModal>
             <div class="flex justify-between w-full m-2">
-               <p class="self-center">{{ room }}</p>
+              <p class="self-center">{{ room }}</p>
               <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
             </div>
             <template #content>
@@ -87,26 +87,29 @@ const stateJoin = ref({
   pseudo: "",
 })
 
+let socket = useSocket()
+
 definePageMeta({
- middleware : [
-  function(to,from) {
-    console.log(from)
-    if (from.path.includes('/room/') && !to.query.return) {
-      const redirectToast = useToast()
-      redirectToast.add({
-        title: "Redirection",
-        description: "Vous avez tenté de joindre la salle via une URL. \n Veuillez utiliser le bouton 'Rejoindre une room.'",
-        duration : 10000
-      })
-    } 
-  }
- ]
+  middleware: [
+    function (to, from) {
+      console.log(from)
+      if (from.path.includes('/room/') && !to.query.return) {
+        
+        const redirectToast = useToast()
+        redirectToast.add({
+          title: "Redirection",
+          description: "Vous avez tenté de joindre la salle via une URL. \n Veuillez utiliser le bouton 'Rejoindre une room.'",
+          duration: 10000
+        })
+      }
+    }
+  ]
 })
 
 
 const errorToast = useToast()
 
-let socket = useSocket()
+
 onMounted(() => {
   socket.on("connect", () => {
 
@@ -141,12 +144,12 @@ const createRoom = async () => {
   }
 }
 
-const joinRoom = async (currentRoom : string) => {
+const joinRoom = async (currentRoom: string) => {
 
   if (socket !== null) {
     socket.emit("join-room", {
-      roomName : currentRoom,
-      password : stateJoin.value.password,
+      roomName: currentRoom,
+      password: stateJoin.value.password,
       pseudo: stateJoin.value.pseudo
     })
   }

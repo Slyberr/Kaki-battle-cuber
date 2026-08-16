@@ -2,7 +2,16 @@
 
   <UHeader title="KakiBattle">
     <template #left>
-      <UButton color="primary" variant="ghost" label="Retour" to="/home?return=yes" icon="lucide:arrow-left"/>
+      <UModal>
+      <UButton color="primary" variant="ghost" label="Retour"  icon="lucide:arrow-left"/>
+        <template #content>
+          <div class="flex flex-col p-8 w-full gap-10 items-center justify-between">
+          <p>En quittant la room, vous serez indirectement éjectée. Partir ?</p>
+          
+          <UButton class="w-20"  label="Oui" @click="leaveRoom()"  icon="lucide:check"/>
+         </div>   
+        </template>
+    </UModal>
     </template>
     <template #body><p>KakiTimer</p></template>
   </UHeader>
@@ -77,6 +86,11 @@ socket.on("nextSolve", (scores : any) => {
 const sendTime = (time : string) => {
   socket.emit("save-time", {roomName : roomName.value,time : time, playerId : me.value.id, solveId : solveID.value })
   playerState.value = "SCORE"
+}
+
+const leaveRoom = () => {
+  socket.emit("leave-room", me.value, roomName)
+  return navigateTo("/home?return=yes")
 }
 
 // socket.on("receivemessage", (data: Message) => {
