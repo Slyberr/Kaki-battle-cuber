@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Server TS",
+      "runtimeExecutable": "/home/presti-louis/.nvm/versions/node/v24.13.1/bin/node",
+      "runtimeArgs": ["./node_modules/.bin/tsx"],
+      "args": ["${workspaceFolder}/server.ts"],
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      //"skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
