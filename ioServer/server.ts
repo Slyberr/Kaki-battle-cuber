@@ -33,15 +33,19 @@ const io: Server = new Server(httpServer, {
 
 const rooms: Map<
   string,
-  { password: string; players: player[]; currentScores: Record<string, any> }
+  {
+    password: string;
+    players: player[];
+    nbrPlayers: number;
+    currentScores: Record<string, any>;
+  }
 > = new Map();
 
 io.on("connection", (socket) => {
   console.log("Nouvel utilisateur !", socket.id);
 
   //Send all room name for home.vue
-  const roomsChoice = Array.from(rooms.keys());
-  socket.emit("get-rooms", roomsChoice);
+  socket.emit("get-rooms", sendNameAndLengthRoom());
 
   socket.on("disconnect", (reason) => {
     //remove player from his room
@@ -62,6 +66,8 @@ io.on("connection", (socket) => {
 
     if (indexToRemove !== null) {
       leaveRoom(socket, roomName, socket.id, true);
+      //Emit to EVERYONE rooms updated
+      io.emit("get-rooms", sendNameAndLengthRoom());
     }
 
     //special case : everyone submit his time but last one disconnected.
@@ -91,6 +97,7 @@ io.on("connection", (socket) => {
             { id: socket.id, pseudo: room.pseudo, owner: true, state: "READY" },
           ],
           currentScores: {},
+          nbrPlayers : 1
         });
         socket.emit("go-to-room", room.roomName);
 
@@ -100,9 +107,8 @@ io.on("connection", (socket) => {
           rooms.get(room.roomName)?.players,
         );
 
-        //Everyone update the rooms
-        const roomsChoice = Array.from(rooms.keys());
-        io.emit("get-rooms", roomsChoice);
+        //Emit to EVERYONE rooms updated
+        io.emit("get-rooms", sendNameAndLengthRoom());
       } else {
         socket.emit("error", "Une room de ce nom existe déjà !");
       }
@@ -131,9 +137,14 @@ io.on("connection", (socket) => {
         });
         socket.join(info.roomName);
 
+        room.nbrPlayers++
+        rooms.set(info.roomName,room);
         //redirect on room/[id].vue
         socket.emit("go-to-room", info.roomName);
 
+        //Emit to EVERYONE rooms updated
+        io.emit("get-rooms", sendNameAndLengthRoom());
+ 
         //when a new player come (event for players already in room)
         io.to(info.roomName).emit("new-player", room.players);
       }
@@ -143,9 +154,8 @@ io.on("connection", (socket) => {
   //Leave a room (only one room by player)
   socket.on("leave-room", (user: player, roomName: string) => {
     leaveRoom(socket, roomName, user.id, false);
-    //Send all room name for home.vue
-    const roomsChoice = Array.from(rooms.keys());
-    socket.emit("get-rooms", roomsChoice);
+    //Emit to EVERYONE rooms updated
+    io.emit("get-rooms", sendNameAndLengthRoom());
   });
   //ask data immediatly when enter on room/[id].vue
   socket.on("i-want-room-data", (roomName) => {
@@ -221,8 +231,6 @@ const leaveRoom = (
   if (playerRemoved.length === 0) {
     //Socket.io auto-deleting if no one left.
     rooms.delete(roomName);
-    //Emit to EVERYONE the new list of room.
-    io.emit("get-rooms", Array.from(rooms.keys()));
     console.log(
       "Room",
       roomName,
@@ -230,19 +238,22 @@ const leaveRoom = (
       Array.from(rooms.keys()),
     );
   } else {
+    room.nbrPlayers--
     rooms.set(roomName, room);
-    console.log(
-      "Room",
-      roomName,
-      "conservée. Joueurs restants : "
-    );
-    room.players.forEach( (player) => console.log(player.pseudo))
+    console.log("Room", roomName, "conservée. Joueurs restants : ");
+    room.players.forEach((player) => console.log(player.pseudo));
   }
-
   //Stop display the leaver player and update the room.
   io.to(roomName).emit("remove-player", rooms.get(roomName)?.players ?? []);
 };
 
+const sendNameAndLengthRoom = () => {
+  let res : {roomName : string,length : number}[] = []
+  rooms.forEach((room,key) => {
+    res.push({roomName : key, length : room.players.length})
+  })
+  return res
+}
 httpServer.listen(3001, () => {
   console.log("Realtime server listening on :3001");
 });

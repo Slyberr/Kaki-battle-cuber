@@ -32,17 +32,18 @@
         <UButton class="relative" icon="lucide:users">Rejoindre une room</UButton>
       </div>
       <template #content>
-        <p class="text-xl m-2">{{ (rooms as any[]).length }} Rooms actives</p>
+        <p class="text-xl m-2">{{ (rooms.length) }} Rooms actives</p>
         <div class="flex" v-for="room in rooms">
 
           <UModal>
             <div class="flex justify-between w-full m-2">
-              <p class="self-center">{{ room }}</p>
+              <p class="self-center">{{ room.roomName }}</p>
+              <p class="self-center">{{ room.length }} <UIcon name="lucide:users"></UIcon></p>
               <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
             </div>
             <template #content>
-              <p class="text-center text-xl">{{ room }}</p>
-              <UForm :state="stateJoin" class="m-8 space-y-4" @submit="joinRoom(room)">
+              <p class="text-center text-xl">{{ room.roomName }}</p>
+              <UForm :state="stateJoin" class="m-8 space-y-4" @submit="joinRoom(room.roomName)">
                 <UFormField label="Mot de passe" name="password">
                   <UInput type="password" v-model="stateJoin.password"></UInput>
                 </UFormField>
@@ -68,7 +69,7 @@
 
 import * as v from 'valibot'
 
-const rooms = useState('rooms')
+const rooms = useState<{roomName : string,length: number}[]>('rooms')
 
 const schema = v.object({
   roomname: v.pipe(v.string(), v.minLength(4, "Le nom doit au moins faire 4 caractères")),

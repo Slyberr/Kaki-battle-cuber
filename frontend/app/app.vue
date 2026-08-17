@@ -13,7 +13,7 @@
 
 
 <script setup lang="ts">
-const rooms = useState('rooms')
+const rooms = useState<{roomName : string,length : number}[]>('rooms')
 const socket = useSocket()
 const errorToast = useToast()
 onMounted(() => {
