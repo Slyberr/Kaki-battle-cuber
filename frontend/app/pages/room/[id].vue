@@ -15,11 +15,14 @@
     </template>
     <template #body><p>KakiTimer</p></template>
   </UHeader>
-  <div v-if ="me"class="flex flex-col">
-    Vous êtes {{ me.pseudo }}
 
+ 
+  <div v-if ="me"class="flex flex-col items-center gap-4">
+    <h1 class="flex text-center text-3xl">{{ roomName }} room</h1>
+    <p>Vous êtes <i class="text-primary">{{ me.pseudo }}</i></p>
+    <p>{{ scramble }}</p>
     <Timer @time-ok="(time : string)  => sendTime(time)" @player-running="() => playerState = 'RUNNING'" :player-state="playerState""/>
-    <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="times" :solve-id="solveID"></TabBattle>
+    <TabBattle  v-if="roomPlayers.length > 0" :players="roomPlayers" :times="times" :solve-id="solveID"></TabBattle>
     <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
         <UInput type="text" v-model="model"></UInput>
@@ -31,16 +34,18 @@
 
 
 <script setup lang="ts">
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import TabBattle from '../../components/tabBattle.vue'
 import type { Message } from '../../types/chat.js'
+
 
 
 const route = useRoute()
 const socket: Socket = useSocket()
 const roomName = ref(route.params.id)
 const roomPlayers = ref([])
-const times = ref<any[]>([])
+const times = ref<string[]>([])
+const scramble = ref<string>("")
 const me = ref()
 const playerState = ref<"READY" | "RUNNING" | "SCORE">("READY")
 
@@ -61,8 +66,9 @@ definePageMeta({
 socket.emit("i-want-room-data", roomName.value);
 
 //when your a new player in this room
-socket.on("send-all-room-data", (players: []) => {
-  roomPlayers.value = players
+socket.on("send-all-room-data", (info :{players: [], scramble : string, event : string}) => {
+  roomPlayers.value = info.players
+  scramble.value = info.scramble
   me.value = roomPlayers.value[roomPlayers.value.length -1]
 })
 
@@ -76,11 +82,11 @@ socket.on("remove-player", (players) => {
   roomPlayers.value = players
 })
 
-socket.on("nextSolve", (scores : any) => {
+socket.on("nextSolve", (data : {times : string, scramble : string}) =>  {
   solveID.value += 1
   playerState.value = "READY"
-  console.log(scores)
-  times.value.push(scores)
+  times.value.push(data.times)
+  scramble.value = data.scramble
 })
 
 const sendTime = (time : string) => {

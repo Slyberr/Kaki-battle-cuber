@@ -1,5 +1,5 @@
 <template>
-    <UTable :columns="colonnes" :data=" props.times"></UTable>
+    <UTable  class="w-full":columns="colonnes" :data=" props.times"></UTable>
 </template>
 
 

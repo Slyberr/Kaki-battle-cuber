@@ -2,6 +2,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import express from "express";
 import cors from "cors";
+import { randomScrambleForEvent } from "cubing/scramble";
 
 export type player = {
   id: string;
@@ -37,7 +38,26 @@ const rooms: Map<
     password: string;
     players: player[];
     nbrPlayers: number;
-    currentScores: Record<string, any>;
+    scores: Record<string, any>;
+    actualScramble: string;
+    event:
+      | "222"
+      | "333"
+      | "333oh"
+      | "333bf"
+      | "333fm"
+      | "444"
+      | "444bf"
+      | "555"
+      | "555bf"
+      | "666"
+      | "777"
+      | "fto"
+      | "pyram"
+      | "skewb"
+      | "clock"
+      | "minx"
+      | "sq1";
   }
 > = new Map();
 
@@ -75,7 +95,7 @@ io.on("connection", (socket) => {
       roomName !== "" &&
       !rooms.get(roomName)?.players.find((player) => player.state === "READY")
     ) {
-      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.currentScores);
+      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.scores);
     }
     console.log("Aureveoir", socket.id, "\n Raison: ", reason);
   });
@@ -87,7 +107,7 @@ io.on("connection", (socket) => {
   //Create room
   socket.on(
     "create-room",
-    (room: { roomName: string; password: string; pseudo: string }) => {
+    async (room: { roomName: string; password: string; pseudo: string }) => {
       if (!rooms.get(room.roomName)) {
         //Create socket.io Room and a room
         socket.join(room.roomName);
@@ -96,8 +116,10 @@ io.on("connection", (socket) => {
           players: [
             { id: socket.id, pseudo: room.pseudo, owner: true, state: "READY" },
           ],
-          currentScores: {},
-          nbrPlayers : 1
+          scores: {},
+          nbrPlayers: 1,
+          event: '333',
+          actualScramble : (await randomScrambleForEvent('333')).toString()          
         });
         socket.emit("go-to-room", room.roomName);
 
@@ -137,14 +159,14 @@ io.on("connection", (socket) => {
         });
         socket.join(info.roomName);
 
-        room.nbrPlayers++
-        rooms.set(info.roomName,room);
+        room.nbrPlayers++;
+        rooms.set(info.roomName, room);
         //redirect on room/[id].vue
-        socket.emit("go-to-room", info.roomName);
+        socket.emit("go-to-room", info.roomName );
 
         //Emit to EVERYONE rooms updated
         io.emit("get-rooms", sendNameAndLengthRoom());
- 
+
         //when a new player come (event for players already in room)
         io.to(info.roomName).emit("new-player", room.players);
       }
@@ -157,50 +179,51 @@ io.on("connection", (socket) => {
     //Emit to EVERYONE rooms updated
     io.emit("get-rooms", sendNameAndLengthRoom());
   });
+
   //ask data immediatly when enter on room/[id].vue
   socket.on("i-want-room-data", (roomName) => {
     const room = rooms.get(roomName);
     if (room) {
       //Joueurs, temps réalisés...
-      socket.emit("send-all-room-data", room.players);
+      socket.emit("send-all-room-data", {players : room.players, scramble : room.actualScramble, event: room.event});
     }
   });
 
   socket.on(
     "save-time",
-    (info: {
+    async(info: {
       roomName: string;
       time: string;
       playerId: string;
       solveId: number;
     }) => {
-      const room = rooms.get(info.roomName);
+      const room = rooms.get(info.roomName)!;
       const player = room?.players.find(
         (player) => player.id === info.playerId,
       );
 
       if (player) {
-        let getRoom = rooms.get(info.roomName)!;
-        if (Object.keys(getRoom.currentScores).length === 0) {
-          getRoom.currentScores = {
+        
+        if (Object.keys(room.scores).length === 0) {
+          room.scores = {
             num: info.solveId,
             roomID: info.roomName,
             [info.playerId]: info.time,
           };
         } else {
-          getRoom.currentScores[info.playerId] = info.time;
+          room.scores[info.playerId] = info.time;
         }
-        rooms.set(info.roomName, getRoom);
+        rooms.set(info.roomName, room);
         player.state = "SCORE";
 
         if (!room!.players.find((player) => player.state !== "SCORE")) {
           room!.players.map((player) => (player.state = "READY"));
+          const newScramble = (await randomScrambleForEvent(room?.event ?? '333')).toString()
+          room!.actualScramble = newScramble
+          io.to(info.roomName).emit("nextSolve", {times : room.scores, scramble : newScramble});
 
-          io.to(info.roomName).emit("nextSolve", getRoom?.currentScores);
-
-          //Delete the current score in this ROOM.
-          getRoom.currentScores = {};
-          rooms.set(info.roomName, getRoom);
+          
+          rooms.set(info.roomName, room);
         }
       }
     },
@@ -238,7 +261,7 @@ const leaveRoom = (
       Array.from(rooms.keys()),
     );
   } else {
-    room.nbrPlayers--
+    room.nbrPlayers--;
     rooms.set(roomName, room);
     console.log("Room", roomName, "conservée. Joueurs restants : ");
     room.players.forEach((player) => console.log(player.pseudo));
@@ -248,12 +271,12 @@ const leaveRoom = (
 };
 
 const sendNameAndLengthRoom = () => {
-  let res : {roomName : string,length : number}[] = []
-  rooms.forEach((room,key) => {
-    res.push({roomName : key, length : room.players.length})
-  })
-  return res
-}
+  let res: { roomName: string; length: number }[] = [];
+  rooms.forEach((room, key) => {
+    res.push({ roomName: key, length: room.players.length });
+  });
+  return res;
+};
 httpServer.listen(3001, () => {
   console.log("Realtime server listening on :3001");
 });
