@@ -4,13 +4,6 @@ import express from "express";
 import cors from "cors";
 import { randomScrambleForEvent } from "cubing/scramble";
 
-export type player = {
-  id: string;
-  pseudo: string;
-  owner: boolean;
-  state: "READY" | "SCORE";
-};
-
 const app = express();
 
 app.use(
@@ -31,6 +24,14 @@ const io: Server = new Server(httpServer, {
     methods: ["GET", "POST"],
   },
 });
+
+
+export type player = {
+  id: string;
+  pseudo: string;
+  owner: boolean;
+  state: "READY" | "SCORE";
+};
 
 const rooms: Map<
   string,
@@ -67,7 +68,7 @@ io.on("connection", (socket) => {
   console.log("Nouvel utilisateur !", socket.id);
 
   //Send all room name for home.vue
-  socket.emit("get-rooms", sendNameAndLengthRoom());
+  socket.emit("get-rooms", sendNameAndLengthRooms());
 
   socket.on("disconnect", (reason) => {
     //remove player from his room
@@ -89,7 +90,7 @@ io.on("connection", (socket) => {
     if (indexToRemove !== null) {
       leaveRoom(socket, roomName, socket.id, true);
       //Emit to EVERYONE rooms updated
-      io.emit("get-rooms", sendNameAndLengthRoom());
+      io.emit("get-rooms", sendNameAndLengthRooms());
     }
 
     //special case : everyone submit his time but last one disconnected.
@@ -101,10 +102,6 @@ io.on("connection", (socket) => {
     }
     console.log("Aureveoir", socket.id, "\n Raison: ", reason);
   });
-
-  // socket.on("sendmessage", (id, data, date) => {
-  //   io.emit("receivemessage", { id, data, date });
-  // });
 
   //Create room
   socket.on(
@@ -134,14 +131,14 @@ io.on("connection", (socket) => {
         );
 
         //Emit to EVERYONE rooms updated
-        io.emit("get-rooms", sendNameAndLengthRoom());
+        io.emit("get-rooms", sendNameAndLengthRooms());
       } else {
         socket.emit("error", "Une room de ce nom existe déjà !");
       }
     },
   );
 
-  //join a room
+  //Join a room
   socket.on(
     "join-room",
     (info: { roomName: string; password: string; pseudo: string }) => {
@@ -169,7 +166,7 @@ io.on("connection", (socket) => {
         socket.emit("go-to-room", info.roomName);
 
         //Emit to EVERYONE rooms updated
-        io.emit("get-rooms", sendNameAndLengthRoom());
+        io.emit("get-rooms", sendNameAndLengthRooms());
 
         //when a new player come (event for players already in room)
         io.to(info.roomName).emit("new-player", room.players);
@@ -181,14 +178,14 @@ io.on("connection", (socket) => {
   socket.on("leave-room", (user: player, roomName: string) => {
     leaveRoom(socket, roomName, user.id, false);
     //Emit to EVERYONE rooms updated
-    io.emit("get-rooms", sendNameAndLengthRoom());
+    io.emit("get-rooms", sendNameAndLengthRooms());
   });
 
   //asked immediatly when enter on room/[id].vue
   socket.on("i-want-room-data", (roomName) => {
     const room = rooms.get(roomName);
     if (room) {
-      //Joueurs, temps réalisés...
+      //players, times...
       socket.emit("send-all-room-data", {
         players: room.players,
         scramble: room.actualScramble,
@@ -252,10 +249,12 @@ io.on("connection", (socket) => {
   //when event is updated
   socket.on("update-event", async (event, roomName) => {
     const room = rooms.get(roomName)!;
-    ((room.event = event),
-      (room.currentTimes = {}),
-      (room.allTimes = []),
-      (room.actualScramble = (await randomScrambleForEvent(event)).toString()));
+    
+    room.event = event
+    room.currentTimes = {}
+    room.allTimes = []
+    room.actualScramble = (await randomScrambleForEvent(event)).toString();
+    room.solveId = 1
     rooms.set(roomName, room);
     io.to(roomName).emit("event-updated", {
       event: room.event,
@@ -263,6 +262,15 @@ io.on("connection", (socket) => {
       scramble: room.actualScramble,
     });
   });
+
+  //When owner want to clear session
+  socket.on("clear-session", (roomName) => {
+    const room = rooms.get(roomName)!
+    room.currentTimes = {}
+    room.allTimes = []
+    room.solveId = 1
+    io.to(roomName).emit("session-cleaned",{times: room.allTimes, solveId : room.solveId})
+  })
 });
 
 /**
@@ -319,13 +327,14 @@ const leaveRoom = (
   io.to(roomName).emit("remove-player", rooms.get(roomName)?.players ?? []);
 };
 
-const sendNameAndLengthRoom = () => {
+const sendNameAndLengthRooms = () => {
   let res: { roomName: string; length: number }[] = [];
   rooms.forEach((room, key) => {
     res.push({ roomName: key, length: room.players.length });
   });
   return res;
 };
+
 httpServer.listen(3001, () => {
   console.log("Realtime server listening on :3001");
 });

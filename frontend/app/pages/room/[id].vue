@@ -178,6 +178,9 @@ const dropDownItems = ref<DropdownMenuItem[][]>([
     {
       label: "Réinitialiser la session",
       icon: "lucide:brush-cleaning",
+      onSelect : () => { 
+        socket.emit("clear-session",(roomName.value))
+      }
 
     },
   ]
@@ -251,7 +254,14 @@ socket.on("event-updated", (info : {event : string,times : [], scramble : string
   event.value = info.event
   times.value = info.times
   scramble.value = info.scramble
+  solveID.value = 1
 })
+
+socket.on("session-cleaned", (info: {times : [], solveId : number}) => {
+  times.value = info.times
+  solveID.value = info.solveId
+})
+//END LISTERS SECTION
 
 const sendTime = (time: string) => {
   socket.emit("save-time", { roomName: roomName.value, time: time, playerId: me.value.id, solveId: solveID.value })

@@ -70,6 +70,7 @@ const saveTime = () => {
 }
 watch(() => props.playerState, async(newState,oldState) => {
   if (oldState !== newState && newState == 'READY') {
+    timerValue.value = '0.00'
     localTimerState.value = 'READY'
     waitOtherPlayer.value = false
     buttonLabel.value = "Confirmer"
