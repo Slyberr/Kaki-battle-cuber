@@ -7,7 +7,7 @@ import { randomScrambleForEvent } from "cubing/scramble";
 export type player = {
   id: string;
   pseudo: string;
-  owner: Boolean;
+  owner: boolean;
   state: "READY" | "SCORE";
 };
 
@@ -38,7 +38,9 @@ const rooms: Map<
     password: string;
     players: player[];
     nbrPlayers: number;
-    scores: Record<string, any>;
+    currentTimes: Record<string, any>;
+    allTimes: Record<string, any>[];
+    solveId: number;
     actualScramble: string;
     event:
       | "222"
@@ -95,7 +97,7 @@ io.on("connection", (socket) => {
       roomName !== "" &&
       !rooms.get(roomName)?.players.find((player) => player.state === "READY")
     ) {
-      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.scores);
+      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.currentTimes);
     }
     console.log("Aureveoir", socket.id, "\n Raison: ", reason);
   });
@@ -116,10 +118,12 @@ io.on("connection", (socket) => {
           players: [
             { id: socket.id, pseudo: room.pseudo, owner: true, state: "READY" },
           ],
-          scores: {},
+          currentTimes: {},
+          allTimes: [{}],
+          solveId: 1,
           nbrPlayers: 1,
-          event: '333',
-          actualScramble : (await randomScrambleForEvent('333')).toString()          
+          event: "333",
+          actualScramble: (await randomScrambleForEvent("333")).toString(),
         });
         socket.emit("go-to-room", room.roomName);
 
@@ -162,7 +166,7 @@ io.on("connection", (socket) => {
         room.nbrPlayers++;
         rooms.set(info.roomName, room);
         //redirect on room/[id].vue
-        socket.emit("go-to-room", info.roomName );
+        socket.emit("go-to-room", info.roomName);
 
         //Emit to EVERYONE rooms updated
         io.emit("get-rooms", sendNameAndLengthRoom());
@@ -180,18 +184,25 @@ io.on("connection", (socket) => {
     io.emit("get-rooms", sendNameAndLengthRoom());
   });
 
-  //ask data immediatly when enter on room/[id].vue
+  //asked immediatly when enter on room/[id].vue
   socket.on("i-want-room-data", (roomName) => {
     const room = rooms.get(roomName);
     if (room) {
       //Joueurs, temps réalisés...
-      socket.emit("send-all-room-data", {players : room.players, scramble : room.actualScramble, event: room.event});
+      socket.emit("send-all-room-data", {
+        players: room.players,
+        scramble: room.actualScramble,
+        event: room.event,
+        solveId: room.solveId,
+        times: room.allTimes,
+      });
     }
   });
 
+  //When a player just submit his time
   socket.on(
     "save-time",
-    async(info: {
+    async (info: {
       roomName: string;
       time: string;
       playerId: string;
@@ -203,31 +214,55 @@ io.on("connection", (socket) => {
       );
 
       if (player) {
-        
-        if (Object.keys(room.scores).length === 0) {
-          room.scores = {
+        if (Object.keys(room.currentTimes).length === 0) {
+          room.currentTimes = {
             num: info.solveId,
             roomID: info.roomName,
             [info.playerId]: info.time,
           };
         } else {
-          room.scores[info.playerId] = info.time;
+          room.currentTimes[info.playerId] = info.time;
         }
         rooms.set(info.roomName, room);
         player.state = "SCORE";
 
+        //If everyone in the room send his time
         if (!room!.players.find((player) => player.state !== "SCORE")) {
           room!.players.map((player) => (player.state = "READY"));
-          const newScramble = (await randomScrambleForEvent(room?.event ?? '333')).toString()
-          room!.actualScramble = newScramble
-          io.to(info.roomName).emit("nextSolve", {times : room.scores, scramble : newScramble});
+          const newScramble = (
+            await randomScrambleForEvent(room?.event ?? "333")
+          ).toString();
+          room!.actualScramble = newScramble;
+          room.allTimes.push(room.currentTimes);
 
-          
+          room.solveId++;
+          io.to(info.roomName).emit("nextSolve", {
+            times: room.currentTimes,
+            scramble: newScramble,
+            solveId: room.solveId,
+          });
+          room.currentTimes = {};
+
           rooms.set(info.roomName, room);
         }
       }
     },
   );
+
+  //when event is updated
+  socket.on("update-event", async (event, roomName) => {
+    const room = rooms.get(roomName)!;
+    ((room.event = event),
+      (room.currentTimes = {}),
+      (room.allTimes = []),
+      (room.actualScramble = (await randomScrambleForEvent(event)).toString()));
+    rooms.set(roomName, room);
+    io.to(roomName).emit("event-updated", {
+      event: room.event,
+      times: room.allTimes,
+      scramble: room.actualScramble,
+    });
+  });
 });
 
 /**
@@ -248,22 +283,36 @@ const leaveRoom = (
   }
 
   const room = rooms.get(roomName)!;
-  const playerRemoved = room.players.filter((player) => player.id !== userID);
-  room!.players = playerRemoved;
+  let wasOwner = false;
+  const roomWithoutleaver = room.players.filter((player) => {
+    if (player.id === userID) {
+      wasOwner = player.owner;
+      return false;
+    } else {
+      return true
+    }
+  });
+  room!.players = roomWithoutleaver;
 
-  if (playerRemoved.length === 0) {
+  if (roomWithoutleaver.length === 0) {
     //Socket.io auto-deleting if no one left.
     rooms.delete(roomName);
     console.log(
-      "Room",
+      "La room nommée",
       roomName,
       "supprimée. Etat des rooms :",
       Array.from(rooms.keys()),
     );
   } else {
     room.nbrPlayers--;
+    
+    //Select a new room owner
+    if (wasOwner) {
+      room.players[0].owner = true;
+    }
+    
     rooms.set(roomName, room);
-    console.log("Room", roomName, "conservée. Joueurs restants : ");
+    console.log("la room", roomName, "est conservée. Joueurs restants : ");
     room.players.forEach((player) => console.log(player.pseudo));
   }
   //Stop display the leaver player and update the room.
