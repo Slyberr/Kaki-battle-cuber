@@ -1,14 +1,15 @@
 <template>
-
   <UHeader title="KakiBattle">
     <template #left>
       <UModal>
         <UButton color="primary" variant="ghost" label="Retour" icon="lucide:arrow-left" />
-        <template #content>
+        <template #content="{ close }">
           <div class="flex flex-col p-8 w-full gap-10 items-center justify-between">
-            <p>En quittant la room, vous serez indirectement éjectée. Partir ?</p>
-
-            <UButton class="w-20" label="Oui" @click="leaveRoom()" icon="lucide:check" />
+            <p>En quittant la room, vous serez indirectement éjectée et vos scores seront supprimés. Partir ? </p>
+            <div class="flex justify-between w-[50%]">
+              <UButton class="w-20" label="Oui" @click="leaveRoom()" icon="lucide:check" />
+              <UButton class="w-20" label="Non" @click="close" icon="lucide:x" />
+            </div>
           </div>
         </template>
       </UModal>
@@ -19,21 +20,21 @@
   </UHeader>
 
 
-  <div v-if="me" class="flex flex-col items-center gap-4 w-full">
+  <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
     <h1 class="flex text-center text-3xl">{{ roomName }} room</h1>
     <p>Vous êtes <i class="text-primary">{{ me.pseudo }}</i></p>
-    <p class="text-2xl">{{ event }}</p>
+    <p class="text-2xl">{{ puzzle }}</p>
     <p class="text-center max-w-[max(50%,600px)]">{{ scramble }}</p>
 
-    <Timer class="mt-10"@time-ok="(time: string) => sendTime(time)" @player-running="() => playerState = 'RUNNING'"
+    <Timer class="mt-10" @time-ok="(time: string) => sendTime(time)" @player-running="() => playerState = 'RUNNING'"
       :player-state="playerState""/>
     <UDropdownMenu  v-if="me.owner" :items="dropDownItems">
-       
+
       <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
       <template #content>
 
       </template>
-      </UDropdownMenu >
+      </UDropdownMenu>
       <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="times" :solve-id="solveID"></TabBattle>
       <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
@@ -41,10 +42,8 @@
         <UButton @click="sendMessage">Envoyer</UButton>
       </div> -->
 
-
-      <UModal v-if="dropDownModal.modalReset"></UModal>
-
   </div>
+
 </template>
 
 
@@ -53,24 +52,26 @@ import { Socket } from 'socket.io-client';
 import TabBattle from '../../components/tabBattle.vue'
 import type { Message } from '../../types/chat.js'
 import type { DropdownMenuItem } from '@nuxt/ui';
+import { TwistyPlayer } from 'cubing/twisty';
+import { map } from 'valibot';
 
-const mapEvent = new Map([
-  ['222', '2x2'],
-  ['333', '3x3'],
-  ['333oh', '3x3 OH'],
-  ['333bf', "3x3 à l'aveugle"],
-  ['444', '4x4'],
-  ['444bf', "4x4 à l'aveugle"],
-  ['555', "5x5"],
-  ['555bf', "5x5 à l'aveugle"],
-  ['666', '6x6'],
-  ['777', '7x7'],
-  ['pyram', 'Pyraminx'],
-  ['skewb', 'Skewb'],
-  ['clock', 'Clock'],
-  ['fto', 'Face Turing Octahedron'],
-  ['sq1', 'Square-1'],
-  ['minx', 'Megaminx']
+const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
+  ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
+  ['333', { toDisplay: '3x3', toDrawer: '3x3x3' }],
+  ['333oh', { toDisplay: '3x3 à une main', toDrawer: '3x3x3' }],
+  ['333bf', { toDisplay: "3x3 à l'aveugle", toDrawer: '3x3x3' }],
+  ['444', { toDisplay: '4x4', toDrawer: '4x4x4' }],
+  ['444bf', { toDisplay: "4x4 à l'aveugle", toDrawer: '4x4x4' }],
+  ['555', { toDisplay: '5x5', toDrawer: '5x5x5' }],
+  ['555bf', { toDisplay: "5x5 à l'aveugle", toDrawer: "5x5x5" }],
+  ['666', { toDisplay: '6x6', toDrawer: '6x6x6' }],
+  ['777', { toDisplay: '7x7', toDrawer: '7x7x7' }],
+  ['pyram', { toDisplay: 'Pyraminx', toDrawer: 'pyraminx' }],
+  ['skewb', { toDisplay: 'Skewb', toDrawer: 'skewb' }],
+  ['clock', { toDisplay: 'Clock', toDrawer: 'clock' }],
+  ['fto', { toDisplay: 'FTO', toDrawer: 'fto' }],
+  ['sq1', { toDisplay: 'Square-1', toDrawer: 'square1' }],
+  ['minx', { toDisplay: 'Megaminx', toDrawer: 'megaminx' }]
 ])
 
 const route = useRoute()
@@ -82,14 +83,10 @@ const me = ref()
 
 const times = ref<string[]>([])
 const scramble = ref<string>("")
-const event = ref<string>("")
+const puzzle = ref<string>("")
 
 const playerState = ref<"READY" | "RUNNING" | "SCORE">("READY")
-const dropDownModal = reactive({
-  modalEvent: false,
-  modalReset: false,
-
-})
+const drawer = ref<TwistyPlayer>()
 
 const solveID = ref(1)
 const model = defineModel<string>()
@@ -108,67 +105,67 @@ const dropDownItems = ref<DropdownMenuItem[][]>([
           },
           {
             label: "2x2",
-            onSelect: () => { socket.emit("update-event", "222",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "222", roomName.value) }
           },
           {
             label: "3x3",
-            onSelect: () => { socket.emit("update-event", "333",roomName.value) }
-          }, 
+            onSelect: () => { socket.emit("update-event", "333", roomName.value) }
+          },
           {
             label: "3x3oh",
-            onSelect: () => { socket.emit("update-event", "333oh",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "333oh", roomName.value) }
           },
           {
             label: "3x3bf",
-            onSelect: () => { socket.emit("update-event", "333bf",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "333bf", roomName.value) }
           },
           {
             label: "4x4",
-            onSelect: () => { socket.emit("update-event", "444",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "444", roomName.value) }
           },
           {
             label: "4x4bf",
-            onSelect: () => { socket.emit("update-event", "444bf",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "444bf", roomName.value) }
           },
           {
             label: "5x5",
-            onSelect: () => { socket.emit("update-event", "555",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "555", roomName.value) }
           },
           {
             label: "5x5bf",
-            onSelect: () => { socket.emit("update-event", "555bf",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "555bf", roomName.value) }
           },
           {
             label: "6x6",
-            onSelect: () => { socket.emit("update-event", "666",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "666", roomName.value) }
           },
           {
             label: "7x7",
-            onSelect: () => { socket.emit("update-event", "777",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "777", roomName.value) }
           },
           {
             label: "Pyraminx",
-            onSelect: () => { socket.emit("update-event", "pyram",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "pyram", roomName.value) }
           },
           {
             label: "Skewb",
-            onSelect: () => { socket.emit("update-event", "skewb",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "skewb", roomName.value) }
           },
           {
             label: "Square-1",
-            onSelect: () => { socket.emit("update-event", "sq1",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "sq1", roomName.value) }
           },
           {
             label: "Clock",
-            onSelect: () => { socket.emit("update-event", "clock",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "clock", roomName.value) }
           },
           {
             label: "Megaminx",
-            onSelect: () => { socket.emit("update-event", "minx",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "minx", roomName.value) }
           },
           {
             label: "FTO",
-            onSelect: () => { socket.emit("update-event", "fto",roomName.value) }
+            onSelect: () => { socket.emit("update-event", "fto", roomName.value) }
           }
 
         ]
@@ -178,13 +175,17 @@ const dropDownItems = ref<DropdownMenuItem[][]>([
     {
       label: "Réinitialiser la session",
       icon: "lucide:brush-cleaning",
-      onSelect : () => { 
-        socket.emit("clear-session",(roomName.value))
+      onSelect: () => {
+        socket.emit("clear-session", (roomName.value))
       }
 
     },
   ]
 ])
+
+onUnmounted(() => {
+  document.body.querySelector('twisty-player')?.remove()
+})
 
 definePageMeta({
   middleware: [
@@ -196,9 +197,10 @@ definePageMeta({
   ]
 })
 
+
+
 //Instant ask at server
 socket.emit("i-want-room-data", roomName.value);
-
 
 //ALL LISTENERS SECTIONS
 
@@ -206,12 +208,29 @@ socket.emit("i-want-room-data", roomName.value);
 socket.on("send-all-room-data", (info: { players: [], scramble: string, event: string, solveId: number, times: any[] }) => {
   roomPlayers.value = info.players
   scramble.value = info.scramble
+  if (document.querySelector('twisty-player') === null) {
+    drawer.value = new TwistyPlayer()
+
+    drawer.value.puzzle = (mapEvent.get(info.event)!.toDrawer) as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
+    drawer.value.alg = scramble.value
+    drawer.value.visualization = "2D"
+    drawer.value.controlPanel = 'none'
+    drawer.value.background = 'none'
+    const wrapper = document.createElement('div')
+    wrapper.classList.add('flex','justify-end', 'h-[min(200px,30dvh)]')
+    wrapper.appendChild(drawer.value)
+    document.body.appendChild(wrapper)
+  }
+
+
+
+
   me.value = roomPlayers.value[roomPlayers.value.length - 1]
 
   //Scenario : i'm new player but the room already begin 
   times.value = info.times
   solveID.value = info.solveId
-  event.value = mapEvent.get(info.event) ?? ""
+  puzzle.value = mapEvent.get(info.event)?.toDisplay ?? ""
 })
 
 //When a new player arrived
@@ -224,13 +243,13 @@ socket.on("remove-player", (players) => {
   roomPlayers.value = players
   //
   const wasOwner = me.value.owner
-  me.value = roomPlayers.value.find((player :any)=> player.id === me.value.id)
+  me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)
   if (me.value.owner && wasOwner === false) {
     const toast = useToast()
     toast.add({
       title: "Le modérateur de salle est parti.",
-          description: "Vous êtes maintenant le modérateur ! Choisissez les options via la roue crantée. ",
-          duration: 10000
+      description: "Vous êtes maintenant le modérateur ! Choisissez les options via la roue crantée. ",
+      duration: 10000
     })
   }
 })
@@ -246,18 +265,26 @@ socket.on("nextSolve", (data: { times: any, scramble: string, solveId: number })
   }
 
   scramble.value = data.scramble
+  drawer.value!.alg = scramble.value
+
   solveID.value = data.solveId
+
 })
 
 //When owner change the event
-socket.on("event-updated", (info : {event : string,times : [], scramble : string}) => {
-  event.value = info.event
+socket.on("event-updated", (info: { event: string, times: [], scramble: string }) => {
+  const eventInfo = mapEvent.get(info.event)!
+  puzzle.value = eventInfo.toDisplay
   times.value = info.times
   scramble.value = info.scramble
   solveID.value = 1
+
+  //Maj twisty
+  drawer.value!.puzzle = eventInfo.toDrawer as  "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7" 
+  drawer.value!.alg = scramble.value
 })
 
-socket.on("session-cleaned", (info: {times : [], solveId : number}) => {
+socket.on("session-cleaned", (info: { times: [], solveId: number }) => {
   times.value = info.times
   solveID.value = info.solveId
 })
@@ -272,20 +299,5 @@ const leaveRoom = () => {
   socket.emit("leave-room", me.value, roomName.value)
   return navigateTo("/home?return=yes")
 }
-
-// socket.on("receivemessage", (data: Message) => {
-//   console.log('message reçu client', data)
-//   conv.value.push(data)
-// })
-
-
-// const sendMessage = () => {
-//   if (socket && model.value !== "") {
-//     socket.emit("sendmessage", socket.id, model.value, Date.now())
-//   }
-// }
-
-
-
 
 </script>

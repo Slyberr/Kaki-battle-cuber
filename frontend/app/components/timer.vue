@@ -1,5 +1,5 @@
 <template>
-  <div class="timer w-full flex justify-center ">
+  <div class="timer w-full flex justify-center min-h-25">
     <div class="flex flex-col items-center">
       <div class="text-4xl">{{ timerValue }}</div>
       <div v-if="localTimerState === 'CONFIRM'">
