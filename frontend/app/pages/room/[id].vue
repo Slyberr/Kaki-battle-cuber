@@ -28,7 +28,7 @@
       <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
 
       <Timer class="mt-10" @time-ok="(time: string) => sendTime(time)" @player-running="() => playerState = 'RUNNING'"
-        :player-state="playerState" :ready-holding-time="readyHoldingTime" />
+        :player-state="playerState" :ready-holding-time="readyHoldingTime" :active-inspection="inspection" />
       <UDropdownMenu :items="dropDownItems">
 
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
@@ -90,6 +90,7 @@ const puzzle = ref<string>("")
 
 const playerState = ref<"READY" | "RUNNING" | "SCORE">("READY")
 const readyHoldingTime = ref<number>(0.3)
+const inspection = ref<boolean>(false)
 const drawer = ref<TwistyPlayer>()
 
 const solveID = ref<number>(1)
@@ -101,7 +102,7 @@ const dropDownItems = computed((): DropdownMenuItem[][] => {
   const menuForEveryone: DropdownMenuItem[][] = [
     [
       {
-        label: "Presser la barre espace pendant",
+        label: `Presser la barre espace pendant... (${readyHoldingTime.value}s)`,
         icon: "lucide:timer",
         children: [
           {
@@ -121,6 +122,11 @@ const dropDownItems = computed((): DropdownMenuItem[][] => {
             onSelect: () => { readyHoldingTime.value = 1 }
           }
         ]
+      },
+      {
+        label : `Activer/Désactiver l'inspection (${inspection.value ? "Activée" : "Désactivée" })`,
+        icon : 'lucide:timer-off',
+        onSelect : () => {inspection.value = !inspection.value}
       }
     ]
   ]

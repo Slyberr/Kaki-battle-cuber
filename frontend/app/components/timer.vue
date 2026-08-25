@@ -10,9 +10,9 @@
 </template>
 
 <script lang="ts" setup>
-const props = defineProps<{ playerState: "READY" | "RUNNING" | "SCORE", readyHoldingTime : number }>()
+const props = defineProps<{ playerState: "READY" | "RUNNING" | "SCORE", readyHoldingTime: number, activeInspection: boolean }>()
 
-const timer = reactive<{ time: string, state: "NOT_READY" | "READY" | "RUNNING" | "CONFIRM", color: string }>({
+const timer = reactive<{ time: string, state: "NOT_READY" | "INSPECTION" | "READY" | "RUNNING" | "CONFIRM", color: string }>({
   time: "0.00",
   state: "NOT_READY",
   color: "text-gray-50"
@@ -20,7 +20,11 @@ const timer = reactive<{ time: string, state: "NOT_READY" | "READY" | "RUNNING" 
 
 
 const timerIntervalId = ref<NodeJS.Timeout>()
+const inspectionId = ref<NodeJS.Timeout>()
 const holdingSpaceId = ref<NodeJS.Timeout>()
+
+let inspectionValue: number = 15
+
 const timeNeededToReady = ref<number>()
 
 const waitOtherPlayer = ref<boolean>(false)
@@ -33,36 +37,60 @@ onMounted(() => {
 
   window.addEventListener('keydown', (event: KeyboardEvent) => {
 
-   
+
     if (event.code === 'Space') {
       switch (timer.state) {
+        case "INSPECTION" :
+          timer.color = "text-red-400" 
+          timerGo()          
+
+        break;
 
         //Basic state : the timer is not fired
         case "NOT_READY":
-          timer.color = "text-red-400"
+          
 
           //case if browser retrigger the event after holding space bar too long
           if (event.repeat) {
             return;
           }
 
-          //If not keyUp triggered who kill this interval == holding the key
-          holdingSpaceId.value = setTimeout(() => {
-            timer.color = "text-emerald-400"
-            timer.state = "READY"
-          }, props.readyHoldingTime*1000)
+          if (props.activeInspection) {
+            timer.state = "INSPECTION"
+            timer.time = inspectionValue.toString()
+            inspectionId.value = setInterval(() => {
+              inspectionValue--
+              timer.time = inspectionValue.toString()
+              if (inspectionValue <= 0) {
+                timer.time = "+2"
+              } 
+              if (inspectionValue <= -2) {
+                timer.time = "DNF"
+                inspectionValue = 15
+                clearInterval(inspectionId.value)
+                timer.state = "NOT_READY"
+              }
+              
+            }, 1000)
+            
+          } else {
+            timer.color = "text-red-400"
+            timerGo()
+          }
+
+
           break;
 
-        case "READY" : 
+        case "READY":
           break;
 
         //When timer is stopped
-        case "RUNNING" :
+        case "RUNNING":
           clearInterval(timerIntervalId.value);
           timer.state = "CONFIRM"
           break;
 
-        case "CONFIRM" :
+        case "CONFIRM":
           break;
       }
 
@@ -77,6 +105,7 @@ onMounted(() => {
       switch (timer.state) {
 
         case "NOT_READY":
+        case "INSPECTION" :
           timer.color = "text-gray-50"
           clearInterval(holdingSpaceId.value)
           break
@@ -85,6 +114,8 @@ onMounted(() => {
           //
           timer.color = "text-gray-50"
           timer.state = 'RUNNING'
+          clearInterval(inspectionId.value)
+          inspectionValue = 15
           emits("player-running")
           const beginTime = Date.now()
           timerIntervalId.value = setInterval(() => {
@@ -108,9 +139,19 @@ const saveTime = () => {
   waitOtherPlayer.value = true
   buttonLabel.value = 'En attente des autres joueurs'
   emits('time-ok', timer.time)
-
 }
 
+/**
+ * the solve begin
+ */
+const timerGo = () => {
+  //If not keyUp triggered who kill this interval == holding the key
+  
+  holdingSpaceId.value = setTimeout(() => {
+    timer.color = "text-emerald-400"
+    timer.state = "READY"
+  }, props.readyHoldingTime * 1000)
+}
 
 
 watch(() => props.playerState, async (newState, oldState) => {
