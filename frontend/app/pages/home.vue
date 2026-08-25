@@ -77,13 +77,13 @@ const schema = v.object({
   pseudo: v.pipe(v.string(), v.minLength(1, "Votre pseudo ne doit pas être vide !")),
 })
 
-const state = ref({
+const state = reactive<{roomname : string, password : string, pseudo : string}>({
   roomname: "",
   password: "",
   pseudo: ""
 })
 
-const stateJoin = ref({
+const stateJoin = reactive<{password : string, pseudo : string}>({
   password: "",
   pseudo: "",
 })
@@ -115,9 +115,9 @@ const createRoom = async () => {
 
   if (socket !== null) {
     socket.emit("create-room", {
-      roomName: state.value.roomname,
-      password: state.value.password,
-      pseudo: state.value.pseudo
+      roomName: state.roomname,
+      password: state.password,
+      pseudo: state.pseudo
     });
   }
 }
@@ -127,8 +127,8 @@ const joinRoom = async (currentRoom: string) => {
   if (socket !== null) {
     socket.emit("join-room", {
       roomName: currentRoom,
-      password: stateJoin.value.password,
-      pseudo: stateJoin.value.pseudo
+      password: stateJoin.password,
+      pseudo: stateJoin.pseudo
     })
   }
 

@@ -1,5 +1,6 @@
 <template>
   <UHeader title="KakiBattle">
+
     <template #left>
       <UModal>
         <UButton color="primary" variant="ghost" label="Retour" icon="lucide:arrow-left" />
@@ -19,21 +20,21 @@
     </template>
   </UHeader>
 
+  <div class="overflow-y-hidden">
+    <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
+      <h1 class="flex text-center text-3xl">{{ roomName }} room</h1>
+      <p>Vous êtes <i class="text-primary">{{ me.pseudo }}</i></p>
+      <p class="text-2xl">{{ puzzle }}</p>
+      <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
 
-  <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
-    <h1 class="flex text-center text-3xl">{{ roomName }} room</h1>
-    <p>Vous êtes <i class="text-primary">{{ me.pseudo }}</i></p>
-    <p class="text-2xl">{{ puzzle }}</p>
-    <p class="text-center max-w-[max(50%,600px)]">{{ scramble }}</p>
+      <Timer class="mt-10" @time-ok="(time: string) => sendTime(time)" @player-running="() => playerState = 'RUNNING'"
+        :player-state="playerState" :ready-holding-time="readyHoldingTime" />
+      <UDropdownMenu :items="dropDownItems">
 
-    <Timer class="mt-10" @time-ok="(time: string) => sendTime(time)" @player-running="() => playerState = 'RUNNING'"
-      :player-state="playerState""/>
-    <UDropdownMenu  v-if="me.owner" :items="dropDownItems">
+        <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
+        <template #content>
 
-      <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
-      <template #content>
-
-      </template>
+        </template>
       </UDropdownMenu>
       <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="times" :solve-id="solveID"></TabBattle>
       <!-- <Tchatbox :conv="conv"></Tchatbox>
@@ -42,6 +43,7 @@
         <UButton @click="sendMessage">Envoyer</UButton>
       </div> -->
 
+    </div>
   </div>
 
 </template>
@@ -53,7 +55,8 @@ import TabBattle from '../../components/tabBattle.vue'
 import type { Message } from '../../types/chat.js'
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
-import { map } from 'valibot';
+import { type Player } from '~/types/player.ts';
+
 
 const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
   ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
@@ -77,111 +80,140 @@ const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
 const route = useRoute()
 const socket: Socket = useSocket()
 
-const roomName = ref(route.params.id)
-const roomPlayers = ref([])
-const me = ref()
+const roomName = ref<string | string[] | undefined>(route.params.id)
+const roomPlayers = ref<Player[]>([])
+const me = ref<Player>({ id: "null", owner: false, pseudo: "johndoe", state: "READY" })
 
 const times = ref<string[]>([])
 const scramble = ref<string>("")
 const puzzle = ref<string>("")
 
 const playerState = ref<"READY" | "RUNNING" | "SCORE">("READY")
+const readyHoldingTime = ref<number>(0.3)
 const drawer = ref<TwistyPlayer>()
 
-const solveID = ref(1)
+const solveID = ref<number>(1)
 const model = defineModel<string>()
 const conv = ref<Message[]>([])
 
-const dropDownItems = ref<DropdownMenuItem[][]>([
-  [
-    {
-      label: "Changer d'épreuve",
-      icon: "lucide:puzzle",
+const dropDownItems = computed((): DropdownMenuItem[][] => {
 
-      children: [
-        [
+  const menuForEveryone: DropdownMenuItem[][] = [
+    [
+      {
+        label: "Presser la barre espace pendant",
+        icon: "lucide:timer",
+        children: [
           {
-            label: "Attention : Changer d'épreuve = reset de session !"
+            label: "0 seconde (déclencher dès la touche pressée)",
+            onSelect: () => { readyHoldingTime.value = 0 }
           },
           {
-            label: "2x2",
-            onSelect: () => { socket.emit("update-event", "222", roomName.value) }
+            label: "0.3 seconde",
+            onSelect: () => { readyHoldingTime.value = 0.3 }
           },
           {
-            label: "3x3",
-            onSelect: () => { socket.emit("update-event", "333", roomName.value) }
+            label: "0.55 seconde (Stackmat)",
+            onSelect: () => { readyHoldingTime.value = 0.55 }
           },
           {
-            label: "3x3oh",
-            onSelect: () => { socket.emit("update-event", "333oh", roomName.value) }
-          },
-          {
-            label: "3x3bf",
-            onSelect: () => { socket.emit("update-event", "333bf", roomName.value) }
-          },
-          {
-            label: "4x4",
-            onSelect: () => { socket.emit("update-event", "444", roomName.value) }
-          },
-          {
-            label: "4x4bf",
-            onSelect: () => { socket.emit("update-event", "444bf", roomName.value) }
-          },
-          {
-            label: "5x5",
-            onSelect: () => { socket.emit("update-event", "555", roomName.value) }
-          },
-          {
-            label: "5x5bf",
-            onSelect: () => { socket.emit("update-event", "555bf", roomName.value) }
-          },
-          {
-            label: "6x6",
-            onSelect: () => { socket.emit("update-event", "666", roomName.value) }
-          },
-          {
-            label: "7x7",
-            onSelect: () => { socket.emit("update-event", "777", roomName.value) }
-          },
-          {
-            label: "Pyraminx",
-            onSelect: () => { socket.emit("update-event", "pyram", roomName.value) }
-          },
-          {
-            label: "Skewb",
-            onSelect: () => { socket.emit("update-event", "skewb", roomName.value) }
-          },
-          {
-            label: "Square-1",
-            onSelect: () => { socket.emit("update-event", "sq1", roomName.value) }
-          },
-          {
-            label: "Clock",
-            onSelect: () => { socket.emit("update-event", "clock", roomName.value) }
-          },
-          {
-            label: "Megaminx",
-            onSelect: () => { socket.emit("update-event", "minx", roomName.value) }
-          },
-          {
-            label: "FTO",
-            onSelect: () => { socket.emit("update-event", "fto", roomName.value) }
+            label: "1 seconde",
+            onSelect: () => { readyHoldingTime.value = 1 }
           }
-
         ]
-      ],
-      onSelect: (e) => { console.log(e) }
-    },
-    {
-      label: "Réinitialiser la session",
-      icon: "lucide:brush-cleaning",
-      onSelect: () => {
-        socket.emit("clear-session", (roomName.value))
       }
-
-    },
+    ]
   ]
-])
+  if (me.value.owner) {
+    menuForEveryone.push([
+      {
+        label: "Changer d'épreuve",
+        icon: "lucide:puzzle",
+
+        children: [
+          [
+            {
+              label: "La session sera réinitialisée."
+            },
+            {
+              label: "2x2",
+              onSelect: () => { socket.emit("update-event", "222", roomName.value); }
+            },
+            {
+              label: "3x3",
+              onSelect: () => { socket.emit("update-event", "333", roomName.value); }
+            },
+            {
+              label: "3x3oh",
+              onSelect: () => { socket.emit("update-event", "333oh", roomName.value); }
+            },
+            {
+              label: "3x3bf",
+              onSelect: () => { socket.emit("update-event", "333bf", roomName.value); }
+            },
+            {
+              label: "4x4",
+              onSelect: () => { socket.emit("update-event", "444", roomName.value); }
+            },
+            {
+              label: "4x4bf",
+              onSelect: () => { socket.emit("update-event", "444bf", roomName.value); }
+            },
+            {
+              label: "5x5",
+              onSelect: () => { socket.emit("update-event", "555", roomName.value); }
+            },
+            {
+              label: "5x5bf",
+              onSelect: () => { socket.emit("update-event", "555bf", roomName.value); }
+            },
+            {
+              label: "6x6",
+              onSelect: () => { socket.emit("update-event", "666", roomName.value); }
+            },
+            {
+              label: "7x7",
+              onSelect: () => { socket.emit("update-event", "777", roomName.value); }
+            },
+            {
+              label: "Pyraminx",
+              onSelect: () => { socket.emit("update-event", "pyram", roomName.value); }
+            },
+            {
+              label: "Skewb",
+              onSelect: () => { socket.emit("update-event", "skewb", roomName.value); }
+            },
+            {
+              label: "Square-1",
+              onSelect: () => { socket.emit("update-event", "sq1", roomName.value); }
+            },
+            {
+              label: "Clock",
+              onSelect: () => { socket.emit("update-event", "clock", roomName.value); }
+            },
+            {
+              label: "Megaminx",
+              onSelect: () => { socket.emit("update-event", "minx", roomName.value); }
+            },
+            {
+              label: "FTO",
+              onSelect: () => { socket.emit("update-event", "fto", roomName.value); }
+            }
+          ]
+        ],
+        onSelect: (e) => { console.log(e); }
+      },
+      {
+        label: "Réinitialiser la session",
+        icon: "lucide:brush-cleaning",
+        onSelect: () => {
+          socket.emit("clear-session", (roomName.value));
+        }
+      },
+    ])
+  }
+  return menuForEveryone
+})
 
 onUnmounted(() => {
   document.body.querySelector('twisty-player')?.remove()
@@ -217,15 +249,18 @@ socket.on("send-all-room-data", (info: { players: [], scramble: string, event: s
     drawer.value.controlPanel = 'none'
     drawer.value.background = 'none'
     const wrapper = document.createElement('div')
-    wrapper.classList.add('flex','justify-end', 'h-[min(200px,30dvh)]')
+    wrapper.classList.add('flex', 'justify-end')
     wrapper.appendChild(drawer.value)
     document.body.appendChild(wrapper)
   }
 
 
 
+  if (roomPlayers.value.length > 0) {
 
-  me.value = roomPlayers.value[roomPlayers.value.length - 1]
+    me.value = roomPlayers.value[roomPlayers.value.length - 1]!
+  }
+
 
   //Scenario : i'm new player but the room already begin 
   times.value = info.times
@@ -243,12 +278,12 @@ socket.on("remove-player", (players) => {
   roomPlayers.value = players
   //
   const wasOwner = me.value.owner
-  me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)
+  me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)!
   if (me.value.owner && wasOwner === false) {
     const toast = useToast()
     toast.add({
       title: "Le modérateur de salle est parti.",
-      description: "Vous êtes maintenant le modérateur ! Choisissez les options via la roue crantée. ",
+      description: "Vous êtes maintenant le modérateur ! De nouvelles options sont disponibles.",
       duration: 10000
     })
   }
@@ -280,7 +315,7 @@ socket.on("event-updated", (info: { event: string, times: [], scramble: string }
   solveID.value = 1
 
   //Maj twisty
-  drawer.value!.puzzle = eventInfo.toDrawer as  "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7" 
+  drawer.value!.puzzle = eventInfo.toDrawer as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
   drawer.value!.alg = scramble.value
 })
 
