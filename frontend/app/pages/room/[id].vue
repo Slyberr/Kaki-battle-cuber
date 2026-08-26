@@ -23,7 +23,7 @@
   <div class="overflow-y-hidden">
     <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
       <h1 class="flex text-center text-3xl">{{ roomName }} room</h1>
-      <p>Vous êtes <i class="text-primary">{{ me.pseudo }}</i></p>
+      <p>Vous êtes <i class="text-primary">{{ me.pseudo }} {{ me.owner ? "(modérateur)" : "" }}</i></p>
       <p class="text-2xl">{{ puzzle }}</p>
       <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
 
@@ -84,7 +84,7 @@ const roomName = ref<string | string[] | undefined>(route.params.id)
 const roomPlayers = ref<Player[]>([])
 const me = ref<Player>({ id: "null", owner: false, pseudo: "johndoe", state: "READY" })
 
-const times = ref<string[]>([])
+const times = ref<Record<string, any>[]>([])
 const scramble = ref<string>("")
 const puzzle = ref<string>("")
 
@@ -206,8 +206,7 @@ const dropDownItems = computed((): DropdownMenuItem[][] => {
               onSelect: () => { socket.emit("update-event", "fto", roomName.value); }
             }
           ]
-        ],
-        onSelect: (e) => { console.log(e); }
+        ]
       },
       {
         label: "Réinitialiser la session",
@@ -243,7 +242,7 @@ socket.emit("i-want-room-data", roomName.value);
 //ALL LISTENERS SECTIONS
 
 //response of socket.emit("i-want-room-data")
-socket.on("send-all-room-data", (info: { players: [], scramble: string, event: string, solveId: number, times: any[] }) => {
+socket.on("send-all-room-data", (info: { players: Player[], scramble: string, event: string, solveId: number, times: Record<string, any>[] }) => {
   roomPlayers.value = info.players
   scramble.value = info.scramble
   if (document.querySelector('twisty-player') === null) {
@@ -275,16 +274,19 @@ socket.on("send-all-room-data", (info: { players: [], scramble: string, event: s
 })
 
 //When a new player arrived
-socket.on("new-player", (players) => {
+socket.on("new-player", (players : Player[]) => {
   roomPlayers.value = players
 })
 
 //When a player disconnect
-socket.on("remove-player", (players) => {
+socket.on("remove-player", (players : Player[] ,userID: string) => {
   roomPlayers.value = players
   //
   const wasOwner = me.value.owner
   me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)!
+  times.value.forEach((time) => {
+    delete time[userID]
+  })
   if (me.value.owner && wasOwner === false) {
     const toast = useToast()
     toast.add({
@@ -296,13 +298,13 @@ socket.on("remove-player", (players) => {
 })
 
 //When all players finishs
-socket.on("nextSolve", (data: { times: any, scramble: string, solveId: number }) => {
+socket.on("nextSolve", (data: { times: Record<string,any>, scramble: string, solveId: number }) => {
   playerState.value = "READY"
   //I prefer to send only the last solve in order to not surcharge the "nextSolve" data send.
   if (data.solveId === 1) {
     times.value = [data.times]
   } else {
-    times.value.push(data.times)
+    times.value.unshift(data.times)
   }
 
   scramble.value = data.scramble

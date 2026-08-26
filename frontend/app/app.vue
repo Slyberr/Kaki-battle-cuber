@@ -21,7 +21,6 @@ onMounted(() => {
    socket.on("connect", () => {
 
     socket?.on("error", (data) => {
-      console.log(data, "ici")
       errorToast.add({
         title: "Erreur !",
         description: data,

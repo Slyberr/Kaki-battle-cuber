@@ -230,7 +230,8 @@ io.on("connection", (socket) => {
             await randomScrambleForEvent(room?.event ?? "333")
           ).toString();
           room!.actualScramble = newScramble;
-          room.allTimes.push(room.currentTimes);
+          //new row will be the first.
+          room.allTimes.unshift(room.currentTimes);
 
           room.solveId++;
           io.to(info.roomName).emit("nextSolve", {
@@ -273,6 +274,8 @@ io.on("connection", (socket) => {
   })
 });
 
+//UTILS
+
 /**
  *
  * @param mySocket
@@ -301,7 +304,12 @@ const leaveRoom = (
     }
   });
   room!.players = roomWithoutleaver;
-
+  
+  //performance + when user leave but not disconnect and re-enter in room, times come back, we don't want this
+  //MAYBE ONE DAY I'LL WANT TO EXPLOIT THIS.
+  room!.allTimes.forEach((time) => {
+    delete time[userID]
+  })
   if (roomWithoutleaver.length === 0) {
     //Socket.io auto-deleting if no one left.
     rooms.delete(roomName);
@@ -324,7 +332,7 @@ const leaveRoom = (
     room.players.forEach((player) => console.log(player.pseudo));
   }
   //Stop display the leaver player and update the room.
-  io.to(roomName).emit("remove-player", rooms.get(roomName)?.players ?? []);
+  io.to(roomName).emit("remove-player", rooms.get(roomName)?.players ?? [],userID);
 };
 
 const sendNameAndLengthRooms = () => {

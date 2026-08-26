@@ -25,8 +25,6 @@ const holdingSpaceId = ref<NodeJS.Timeout>()
 
 let inspectionValue: number = 15
 
-const timeNeededToReady = ref<number>()
-
 const waitOtherPlayer = ref<boolean>(false)
 const buttonLabel = ref<string>("Confirmer")
 
@@ -39,55 +37,41 @@ onMounted(() => {
 
 
     if (event.code === 'Space') {
+      //not refired the key if is too long press
+      if (event.repeat) {
+        return;
+      }
       switch (timer.state) {
-        case "INSPECTION" :
-          timer.color = "text-red-400" 
-          timerGo()          
 
-        break;
-
-        //Basic state : the timer is not fired
+        //Do something on keydown only if inspection is disactived.
         case "NOT_READY":
-          
 
-          //case if browser retrigger the event after holding space bar too long
-          if (event.repeat) {
-            return;
+          if (!props.activeInspection) {
+            timer.color = "text-red-400"
+            timerHoldingBeforeGo()
           }
+
+          break;
+
+        //catched only if beginInspection() called (on NOT_READY keyup). Do the same thing like "NOT-READY" ^
+        case "INSPECTION":
 
           if (props.activeInspection) {
-            timer.state = "INSPECTION"
-            timer.time = inspectionValue.toString()
-            inspectionId.value = setInterval(() => {
-              inspectionValue--
-              timer.time = inspectionValue.toString()
-              if (inspectionValue <= 0) {
-                timer.time = "+2"
-              } 
-              if (inspectionValue <= -2) {
-                timer.time = "DNF"
-                inspectionValue = 15
-                clearInterval(inspectionId.value)
-                timer.state = "NOT_READY"
-              }
-              
-            }, 1000)
-            
-          } else {
             timer.color = "text-red-400"
-            timerGo()
+            timerHoldingBeforeGo()
           }
 
-
           break;
 
-        case "READY":
-          break;
-
-        //When timer is stopped
+        //When timer is stopped (keydown).
         case "RUNNING":
           clearInterval(timerIntervalId.value);
           timer.state = "CONFIRM"
+          break;
+
+        //This case should never be catch because when Ready on Keyup, the state READY instantly change into INSPECTION
+        case "READY":
+
           break;
 
         case "CONFIRM":
@@ -105,25 +89,47 @@ onMounted(() => {
       switch (timer.state) {
 
         case "NOT_READY":
-        case "INSPECTION" :
-          timer.color = "text-gray-50"
-          clearInterval(holdingSpaceId.value)
-          break
 
+          //not depending to holding time value.
+          if (props.activeInspection) {
+            beginInspection()
+          } else {
+            //press bar not pressed enough (when inspection disactivated)
+            timer.color = "text-gray-50"
+            clearInterval(holdingSpaceId.value)
+          }
+
+          break;
+        case "INSPECTION":
+
+          //press bar not pressed enough (when inspection activated)
+          if (props.activeInspection) {
+            timer.color = "text-gray-50"
+            clearInterval(holdingSpaceId.value)
+          }
+         
+          break;
+
+        //When user pressed space bar enough to start the timer.
         case "READY":
-          //
+
           timer.color = "text-gray-50"
           timer.state = 'RUNNING'
-          clearInterval(inspectionId.value)
-          inspectionValue = 15
+          if (props.activeInspection) {
+            clearInterval(inspectionId.value)
+            inspectionValue = 15
+          }
+
           emits("player-running")
+          //Show timer with 0.01 precision.
           const beginTime = Date.now()
           timerIntervalId.value = setInterval(() => {
             timer.time = useTimeForHuman(beginTime)
           }, 10)
 
-          break
+          break;
 
+        //This case should never be catch because when RUNNING on keydown the state RUNNING instantly change into "CONFIRM"
         case "RUNNING":
           break
         case "CONFIRM":
@@ -142,18 +148,39 @@ const saveTime = () => {
 }
 
 /**
- * the solve begin
+ * code to create Inspection with penalities (+2 and DNF).
  */
-const timerGo = () => {
-  //If not keyUp triggered who kill this interval == holding the key
-  
+const beginInspection = () => {
+  timer.state = "INSPECTION"
+  timer.time = inspectionValue.toString()
+  inspectionId.value = setInterval(() => {
+    inspectionValue--
+    timer.time = inspectionValue.toString()
+    if (inspectionValue <= 0) {
+      timer.time = "+2"
+    }
+    if (inspectionValue <= -2) {
+      timer.time = "DNF"
+      inspectionValue = 15
+      clearInterval(inspectionId.value)
+      timer.state = "NOT_READY"
+    }
+
+  }, 1000)
+}
+
+/**
+ * if the keyup is triggered before x second, do nothing. Else, the timer will start.
+ */
+const timerHoldingBeforeGo = () => {
+
   holdingSpaceId.value = setTimeout(() => {
     timer.color = "text-emerald-400"
     timer.state = "READY"
   }, props.readyHoldingTime * 1000)
 }
 
-
+//Triggered when all player submit the time on server.
 watch(() => props.playerState, async (newState, oldState) => {
   if (oldState !== newState && newState == 'READY') {
     timer.time = '0.00'

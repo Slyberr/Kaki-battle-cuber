@@ -97,7 +97,6 @@ socket?.on("go-to-room", (roomName) => {
 definePageMeta({
   middleware: [
     function (to, from) {
-      console.log(from)
       if (from.path.includes('/room/') && !to.query.return) {
         
         const redirectToast = useToast()

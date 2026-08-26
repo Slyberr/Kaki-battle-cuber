@@ -1,5 +1,5 @@
 <template>
-    <UTable  class="w-full h-[min(400px,30dvh)]":columns="colonnes" :data=" props.times"></UTable>
+    <UTable sticky class="w-full h-[min(400px,30dvh)]":columns="colonnes" :data=" props.times"></UTable>
 </template>
 
 
