@@ -234,8 +234,6 @@ definePageMeta({
   ]
 })
 
-
-
 //Instant ask at server
 socket.emit("i-want-room-data", roomName.value);
 
@@ -259,13 +257,10 @@ socket.on("send-all-room-data", (info: { players: Player[], scramble: string, ev
     document.body.appendChild(wrapper)
   }
 
-
-
   if (roomPlayers.value.length > 0) {
 
     me.value = roomPlayers.value[roomPlayers.value.length - 1]!
   }
-
 
   //Scenario : i'm new player but the room already begin 
   times.value = info.times
@@ -281,12 +276,13 @@ socket.on("new-player", (players : Player[]) => {
 //When a player disconnect
 socket.on("remove-player", (players : Player[] ,userID: string) => {
   roomPlayers.value = players
-  //
   const wasOwner = me.value.owner
+
   me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)!
   times.value.forEach((time) => {
     delete time[userID]
   })
+
   if (me.value.owner && wasOwner === false) {
     const toast = useToast()
     toast.add({
@@ -309,9 +305,7 @@ socket.on("nextSolve", (data: { times: Record<string,any>, scramble: string, sol
 
   scramble.value = data.scramble
   drawer.value!.alg = scramble.value
-
   solveID.value = data.solveId
-
 })
 
 //When owner change the event
@@ -334,7 +328,7 @@ socket.on("session-cleaned", (info: { times: [], solveId: number }) => {
 //END LISTERS SECTION
 
 const sendTime = (time: string) => {
-  socket.emit("save-time", { roomName: roomName.value, time: time, playerId: me.value.id, solveId: solveID.value })
+  socket.emit("save-time", { roomName: roomName.value, time: time, userId: me.value.id, solveId: solveID.value })
   playerState.value = "SCORE"
 }
 
