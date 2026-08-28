@@ -124,9 +124,9 @@ const dropDownItems = computed((): DropdownMenuItem[][] => {
         ]
       },
       {
-        label : `Activer/Désactiver l'inspection (${inspection.value ? "Activée" : "Désactivée" })`,
-        icon : 'lucide:timer-off',
-        onSelect : () => {inspection.value = !inspection.value}
+        label: `Activer/Désactiver l'inspection (${inspection.value ? "Activée" : "Désactivée"})`,
+        icon: 'lucide:timer-off',
+        onSelect: () => { inspection.value = !inspection.value }
       }
     ]
   ]
@@ -220,10 +220,6 @@ const dropDownItems = computed((): DropdownMenuItem[][] => {
   return menuForEveryone
 })
 
-onUnmounted(() => {
-  document.body.querySelector('twisty-player')?.remove()
-})
-
 definePageMeta({
   middleware: [
     function (to, from) {
@@ -239,93 +235,94 @@ socket.emit("i-want-room-data", roomName.value);
 
 //ALL LISTENERS SECTIONS
 
-//response of socket.emit("i-want-room-data")
-socket.on("send-all-room-data", (info: { players: Player[], scramble: string, event: string, solveId: number, times: Record<string, any>[] }) => {
-  roomPlayers.value = info.players
-  scramble.value = info.scramble
-  if (document.querySelector('twisty-player') === null) {
-    drawer.value = new TwistyPlayer()
+onMounted(() => {
+  //response of socket.emit("i-want-room-data")
+  socket.on("send-all-room-data", (info: { players: Player[], scramble: string, event: string, solveId: number, times: Record<string, any>[] }) => {
+    roomPlayers.value = info.players
+    scramble.value = info.scramble
+    if (document.querySelector('twisty-player') === null) {
+      drawer.value = new TwistyPlayer()
 
-    drawer.value.puzzle = (mapEvent.get(info.event)!.toDrawer) as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
-    drawer.value.alg = scramble.value
-    drawer.value.visualization = "2D"
-    drawer.value.controlPanel = 'none'
-    drawer.value.background = 'none'
-    const wrapper = document.createElement('div')
-    wrapper.classList.add('flex', 'justify-end')
-    wrapper.appendChild(drawer.value)
-    document.body.appendChild(wrapper)
-  }
+      drawer.value.puzzle = (mapEvent.get(info.event)!.toDrawer) as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
+      drawer.value.alg = scramble.value
+      drawer.value.visualization = "2D"
+      drawer.value.controlPanel = 'none'
+      drawer.value.background = 'none'
+      const wrapper = document.createElement('div')
+      wrapper.classList.add('flex', 'justify-end')
+      wrapper.appendChild(drawer.value)
+      document.body.appendChild(wrapper)
+    }
 
-  if (roomPlayers.value.length > 0) {
+    if (roomPlayers.value.length > 0) {
 
-    me.value = roomPlayers.value[roomPlayers.value.length - 1]!
-  }
+      me.value = roomPlayers.value[roomPlayers.value.length - 1]!
+    }
 
-  //Scenario : i'm new player but the room already begin 
-  times.value = info.times
-  solveID.value = info.solveId
-  puzzle.value = mapEvent.get(info.event)?.toDisplay ?? ""
-})
-
-//When a new player arrived
-socket.on("new-player", (players : Player[]) => {
-  roomPlayers.value = players
-})
-
-//When a player disconnect
-socket.on("remove-player", (players : Player[] ,userID: string) => {
-  roomPlayers.value = players
-  const wasOwner = me.value.owner
-
-  me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)!
-  times.value.forEach((time) => {
-    delete time[userID]
+    //Scenario : i'm new player but the room already begin 
+    times.value = info.times
+    solveID.value = info.solveId
+    puzzle.value = mapEvent.get(info.event)?.toDisplay ?? ""
   })
 
-  if (me.value.owner && wasOwner === false) {
-    const toast = useToast()
-    toast.add({
-      title: "Le modérateur de salle est parti.",
-      description: "Vous êtes maintenant le modérateur ! De nouvelles options sont disponibles.",
-      duration: 10000
+  //When a new player arrived
+  socket.on("new-player", (players: Player[]) => {
+    roomPlayers.value = players
+  })
+
+  //When a player disconnect
+  socket.on("remove-player", (players: Player[], userID: string) => {
+    roomPlayers.value = players
+    const wasOwner = me.value.owner
+
+    me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)!
+    times.value.forEach((time) => {
+      delete time[userID]
     })
-  }
+
+    if (me.value.owner && wasOwner === false) {
+      const toast = useToast()
+      toast.add({
+        title: "Le modérateur de salle est parti.",
+        description: "Vous êtes maintenant le modérateur ! De nouvelles options sont disponibles.",
+        duration: 10000
+      })
+    }
+  })
+
+  //When all players finishs
+  socket.on("nextSolve", (data: { times: Record<string, any>, scramble: string, solveId: number }) => {
+    playerState.value = "READY"
+    //I prefer to send only the last solve in order to not surcharge the "nextSolve" data send.
+    if (data.solveId === 1) {
+      times.value = [data.times]
+    } else {
+      times.value.unshift(data.times)
+    }
+
+    scramble.value = data.scramble
+    // drawer.value!.alg = scramble.value
+    solveID.value = data.solveId
+  })
+
+  //When owner change the event
+  socket.on("event-updated", (info: { event: string, times: [], scramble: string }) => {
+    const eventInfo = mapEvent.get(info.event)!
+    puzzle.value = eventInfo.toDisplay
+    times.value = info.times
+    scramble.value = info.scramble
+    solveID.value = 1
+
+    //Maj twisty
+    drawer.value!.puzzle = eventInfo.toDrawer as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
+    drawer.value!.alg = scramble.value
+  })
+
+  socket.on("session-cleaned", (info: { times: [], solveId: number }) => {
+    times.value = info.times
+    solveID.value = info.solveId
+  })
 })
-
-//When all players finishs
-socket.on("nextSolve", (data: { times: Record<string,any>, scramble: string, solveId: number }) => {
-  playerState.value = "READY"
-  //I prefer to send only the last solve in order to not surcharge the "nextSolve" data send.
-  if (data.solveId === 1) {
-    times.value = [data.times]
-  } else {
-    times.value.unshift(data.times)
-  }
-
-  scramble.value = data.scramble
-  drawer.value!.alg = scramble.value
-  solveID.value = data.solveId
-})
-
-//When owner change the event
-socket.on("event-updated", (info: { event: string, times: [], scramble: string }) => {
-  const eventInfo = mapEvent.get(info.event)!
-  puzzle.value = eventInfo.toDisplay
-  times.value = info.times
-  scramble.value = info.scramble
-  solveID.value = 1
-
-  //Maj twisty
-  drawer.value!.puzzle = eventInfo.toDrawer as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
-  drawer.value!.alg = scramble.value
-})
-
-socket.on("session-cleaned", (info: { times: [], solveId: number }) => {
-  times.value = info.times
-  solveID.value = info.solveId
-})
-//END LISTERS SECTION
 
 const sendTime = (time: string) => {
   socket.emit("save-time", { roomName: roomName.value, time: time, userId: me.value.id, solveId: solveID.value })
@@ -336,5 +333,17 @@ const leaveRoom = () => {
   socket.emit("leave-room", me.value, roomName.value)
   return navigateTo("/home?return=yes")
 }
+
+onUnmounted(() => {
+  document.body.querySelector('twisty-player')?.remove()
+  socket.off("send-all-room-data");
+  socket.off("new-player");
+  socket.off("remove-player");
+  socket.off("nextSolve");
+  socket.off("event-updated");
+  socket.off("session-cleaned")
+
+  // drawer.value = undefined
+})
 
 </script>

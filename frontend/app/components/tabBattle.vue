@@ -13,7 +13,6 @@ interface Solve {
     num: number;
     [playerName: string]: any;
 }
-const currentSolve = ref<number>(1)
 const colonnes = computed<TableColumn<Solve>[]>(() => {
 
     const mainColumns = [

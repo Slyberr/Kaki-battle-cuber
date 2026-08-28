@@ -38,7 +38,8 @@
           <UModal>
             <div class="flex justify-between w-full m-2">
               <p class="self-center">{{ room.roomName }}</p>
-              <p class="self-center">{{ room.length }} <UIcon name="lucide:users"></UIcon></p>
+              <p class="self-center">{{ room.length }} <UIcon name="lucide:users"></UIcon>
+              </p>
               <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
             </div>
             <template #content>
@@ -69,7 +70,7 @@
 
 import * as v from 'valibot'
 
-const rooms = useState<{roomName : string,length: number}[]>('rooms')
+const rooms = useState<{ roomName: string, length: number }[]>('rooms')
 
 const schema = v.object({
   roomname: v.pipe(v.string(), v.minLength(4, "Le nom doit au moins faire 4 caractères")),
@@ -77,28 +78,23 @@ const schema = v.object({
   pseudo: v.pipe(v.string(), v.minLength(1, "Votre pseudo ne doit pas être vide !")),
 })
 
-const state = reactive<{roomname : string, password : string, pseudo : string}>({
+const state = reactive<{ roomname: string, password: string, pseudo: string }>({
   roomname: "",
   password: "",
   pseudo: ""
 })
 
-const stateJoin = reactive<{password : string, pseudo : string}>({
+const stateJoin = reactive<{ password: string, pseudo: string }>({
   password: "",
   pseudo: "",
 })
 
-let socket = useSocket()
-
-socket?.on("go-to-room", (roomName) => {
-      navigateTo('/room/' + roomName)
-    })
 
 definePageMeta({
   middleware: [
     function (to, from) {
       if (from.path.includes('/room/') && !to.query.return) {
-        
+
         const redirectToast = useToast()
         redirectToast.add({
           title: "Redirection",
@@ -109,6 +105,19 @@ definePageMeta({
     }
   ]
 })
+
+let socket = useSocket()
+
+onMounted(() => {
+
+  socket.on("go-to-room", (roomName) => {
+    navigateTo('/room/' + roomName);
+  })
+})
+onUnmounted(() => {
+  socket.off("go-to-room");
+})
+
 
 const createRoom = async () => {
 
