@@ -5,19 +5,17 @@
 
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import type { Solve } from '~/types/solve';
 
 
 const props = defineProps<{ players: any[],times: any, solveId : number }>()
 
-interface Solve {
-    num: number;
-    [playerName: string]: any;
-}
+
 const colonnes = computed<TableColumn<Solve>[]>(() => {
 
     const mainColumns = [
         {
-            accessorKey: 'num',
+            accessorKey: 'solveId',
             header: 'n°'
         },
         
@@ -26,7 +24,6 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
         mainColumns.push({ accessorKey: player.id, header: player.pseudo })
     }
     return mainColumns
-
 
 })
 

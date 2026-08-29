@@ -5,13 +5,14 @@ export type Player = {
   state: "READY" | "SCORE";
 };
 
+
 export type Room = {
   password: string;
   players: Player[];
   nbrPlayers: number;
-  currentTimes: {num : number, [id: string] : string  | number};
-  allTimes:  {num : number,[id: string] : string | number}[];
-  solveId: number;
+  currentSolve: {solveId : number, [idUser: string] : string | number};
+  allSolves:  {solveId : number,[idUser: string] : string | number}[];
+  actualSolveId: number;
   actualScramble: string;
   event:
     | "222"

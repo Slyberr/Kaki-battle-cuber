@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
       roomName !== "" &&
       !rooms.get(roomName)?.players.find((player) => player.state === "READY")
     ) {
-      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.currentTimes);
+      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.currentSolve);
     }
     console.log("Bye", socket.id);
   });
@@ -83,9 +83,9 @@ io.on("connection", (socket) => {
           players: [
             { id: socket.id, pseudo: room.pseudo, owner: true, state: "READY" },
           ],
-          currentTimes: { num: -1 },
-          allTimes: [],
-          solveId: 1,
+          currentSolve: { solveId: -1 },
+          allSolves: [],
+          actualSolveId: 1,
           nbrPlayers: 1,
           event: "333",
           actualScramble: (await randomScrambleForEvent("333")).toString(),
@@ -158,8 +158,8 @@ io.on("connection", (socket) => {
         players: room.players,
         scramble: room.actualScramble,
         event: room.event,
-        solveId: room.solveId,
-        times: room.allTimes,
+        actualSolveId: room.actualSolveId,
+        allSolves: room.allSolves,
       });
     }
   });
@@ -182,14 +182,14 @@ io.on("connection", (socket) => {
     const room = rooms.get(roomName);
     if (room) {
       room.event = event;
-      room.currentTimes = { num: -1 };
-      room.allTimes = [];
+      room.currentSolve = { solveId: -1 };
+      room.allSolves = [];
       room.actualScramble = (await randomScrambleForEvent(event)).toString();
-      room.solveId = 1;
+      room.actualSolveId = 1;
       rooms.set(roomName, room);
       io.to(roomName).emit("event-updated", {
         event: room.event,
-        times: room.allTimes,
+        allSolves: room.allSolves,
         scramble: room.actualScramble,
       });
     }
@@ -199,12 +199,12 @@ io.on("connection", (socket) => {
   socket.on("clear-session", (roomName) => {
     const room = rooms.get(roomName);
     if (room) {
-      room.currentTimes = { num: -1 };
-      room.allTimes = [];
-      room.solveId = 1;
+      room.currentSolve = { solveId: -1 };
+      room.allSolves = [];
+      room.actualSolveId = 1;
       io.to(roomName).emit("session-cleaned", {
-        times: room.allTimes,
-        solveId: room.solveId,
+        allSolves: room.allSolves,
+        actualSolveId: room.actualSolveId,
       });
     }
   });

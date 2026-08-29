@@ -36,7 +36,7 @@
 
         </template>
       </UDropdownMenu>
-      <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="times" :solve-id="solveID"></TabBattle>
+      <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves" :solve-id="actualSolveId"></TabBattle>
       <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
         <UInput type="text" v-model="model"></UInput>
@@ -56,7 +56,6 @@ import type { Message } from '../../types/chat.js'
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
 import { type Player } from '~/types/player.ts';
-
 
 const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
   ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
@@ -84,7 +83,7 @@ const roomName = ref<string | string[] | undefined>(route.params.id)
 const roomPlayers = ref<Player[]>([])
 const me = ref<Player>({ id: "null", owner: false, pseudo: "johndoe", state: "READY" })
 
-const times = ref<Record<string, any>[]>([])
+const allSolves = ref<{solveId : number, [id: string] : string | number}[]>([])
 const scramble = ref<string>("")
 const puzzle = ref<string>("")
 
@@ -93,7 +92,7 @@ const readyHoldingTime = ref<number>(0.3)
 const inspection = ref<boolean>(false)
 const drawer = ref<TwistyPlayer>()
 
-const solveID = ref<number>(1)
+const actualSolveId = ref<number>(1)
 const model = defineModel<string>()
 const conv = ref<Message[]>([])
 
@@ -237,7 +236,7 @@ socket.emit("i-want-room-data", roomName.value);
 
 onMounted(() => {
   //response of socket.emit("i-want-room-data")
-  socket.on("send-all-room-data", (info: { players: Player[], scramble: string, event: string, solveId: number, times: Record<string, any>[] }) => {
+  socket.on("send-all-room-data", (info: { players: Player[], scramble: string, event: string, actualSolveId: number, allSolves: {solveId : number,[id : string] : string | number}[] }) => {
     roomPlayers.value = info.players
     scramble.value = info.scramble
     if (document.querySelector('twisty-player') === null) {
@@ -260,8 +259,8 @@ onMounted(() => {
     }
 
     //Scenario : i'm new player but the room already begin 
-    times.value = info.times
-    solveID.value = info.solveId
+    allSolves.value = info.allSolves
+    actualSolveId.value = info.actualSolveId
     puzzle.value = mapEvent.get(info.event)?.toDisplay ?? ""
   })
 
@@ -275,9 +274,9 @@ onMounted(() => {
     roomPlayers.value = players
     const wasOwner = me.value.owner
 
-    me.value = roomPlayers.value.find((player: any) => player.id === me.value.id)!
-    times.value.forEach((time) => {
-      delete time[userID]
+    me.value = roomPlayers.value.find((player: Player) => player.id === me.value.id)!
+    allSolves.value.forEach((solve) => {
+      delete solve[userID]
     })
 
     if (me.value.owner && wasOwner === false) {
@@ -291,27 +290,27 @@ onMounted(() => {
   })
 
   //When all players finishs
-  socket.on("nextSolve", (data: { times: Record<string, any>, scramble: string, solveId: number }) => {
+  socket.on("nextSolve", (data: { solveId: number, scramble : string, solveToDisplay : {solveId : number, [idUser : string] : string | number }}) => {
     playerState.value = "READY"
     //I prefer to send only the last solve in order to not surcharge the "nextSolve" data send.
     if (data.solveId === 1) {
-      times.value = [data.times]
+      allSolves.value = [data.solveToDisplay]
     } else {
-      times.value.unshift(data.times)
+      allSolves.value.unshift(data.solveToDisplay)
     }
 
     scramble.value = data.scramble
     // drawer.value!.alg = scramble.value
-    solveID.value = data.solveId
+    actualSolveId.value = data.solveId
   })
 
   //When owner change the event
   socket.on("event-updated", (info: { event: string, times: [], scramble: string }) => {
     const eventInfo = mapEvent.get(info.event)!
     puzzle.value = eventInfo.toDisplay
-    times.value = info.times
+    allSolves.value = info.times
     scramble.value = info.scramble
-    solveID.value = 1
+    actualSolveId.value = 1
 
     //Maj twisty
     drawer.value!.puzzle = eventInfo.toDrawer as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
@@ -319,13 +318,13 @@ onMounted(() => {
   })
 
   socket.on("session-cleaned", (info: { times: [], solveId: number }) => {
-    times.value = info.times
-    solveID.value = info.solveId
+    allSolves.value = info.times
+    actualSolveId.value = info.solveId
   })
 })
 
 const sendTime = (time: string) => {
-  socket.emit("save-time", { roomName: roomName.value, time: time, userId: me.value.id, solveId: solveID.value })
+  socket.emit("save-time", { roomName: roomName.value, time: time, userId: me.value.id, solveId: actualSolveId.value })
   playerState.value = "SCORE"
 }
 

@@ -20,15 +20,14 @@ export const saveTime = async(roomName: string, rooms : Map<string,Room>, io : S
 
         if (player) {
           //it mean  "no one in this solve submit before" 
-          if (room.currentTimes.num === -1) {
-            room.currentTimes = {
-              num: solveId,
+          if (room.currentSolve.num === -1) {
+            room.currentSolve = {
+              solveId: solveId
             };
           }
           
           //add player time
-          room.currentTimes[userId] = time;
-        
+          room.currentSolve[userId] = time
           player.state = "SCORE";
 
           //If everyone in this room submit his time
@@ -39,18 +38,18 @@ export const saveTime = async(roomName: string, rooms : Map<string,Room>, io : S
             const newScramble = (await randomScrambleForEvent(room?.event ?? "333")).toString();
            
             //Each new row is the first row.
-            room.allTimes.unshift(room.currentTimes);
+            room.allSolves.unshift(room.currentSolve);
 
             room.actualScramble = newScramble;
-            room.solveId++;
+            room.actualSolveId++;
 
             io.to(roomName).emit("nextSolve", {
-              times: room.currentTimes,
+              solveToDisplay: room.currentSolve,
               scramble: newScramble,
-              solveId: room.solveId,
+              solveId: room.actualSolveId,
             });
            
-            room.currentTimes = {num : -1};
+            room.currentSolve = {solveId : -1};
           }
 
           rooms.set(roomName, room);

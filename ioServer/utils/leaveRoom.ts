@@ -38,7 +38,7 @@ export const leaveRoom = (
     room.players = roomWithoutleaver;
 
     //performance + when user leave room but not disconnect, ID is same so times come back. Actually, i don't want this.
-    room.allTimes.forEach((time: Record<string, any>) => {
+    room.allSolves.forEach((time: Record<string, any>) => {
       delete time[userID];
     });
 
