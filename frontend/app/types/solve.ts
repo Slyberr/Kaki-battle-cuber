@@ -1,4 +1,4 @@
 export type Solve =  {
-    props: number;
+    solveId: number;
     [playerName: string]: any;
 }
