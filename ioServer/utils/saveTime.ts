@@ -20,7 +20,7 @@ export const saveTime = async(roomName: string, rooms : Map<string,Room>, io : S
 
         if (player) {
           //it mean  "no one in this solve submit before" 
-          if (room.currentSolve.solveId) {
+          if (room.currentSolve.solveId === -1) {
             room.currentSolve = {
               solveId: solveId
             };

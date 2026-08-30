@@ -56,6 +56,7 @@ import type { Message } from '../../types/chat.js'
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
 import { type Player } from '~/types/player.ts';
+import type { Solve } from '~/types/solve.ts';
 
 const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
   ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
@@ -83,7 +84,7 @@ const roomName = ref<string | string[] | undefined>(route.params.id)
 const roomPlayers = ref<Player[]>([])
 const me = ref<Player>({ id: "null", owner: false, pseudo: "johndoe", state: "READY" })
 
-const allSolves = ref<{solveId : number, [id: string] : string | number}[]>([])
+const allSolves = ref<Solve[]>([])
 const scramble = ref<string>("")
 const puzzle = ref<string>("")
 
@@ -236,7 +237,7 @@ socket.emit("i-want-room-data", roomName.value);
 
 onMounted(() => {
   //response of socket.emit("i-want-room-data")
-  socket.on("send-all-room-data", (info: { players: Player[], scramble: string, event: string, actualSolveId: number, allSolves: {solveId : number,[id : string] : string | number}[] }) => {
+  socket.on("send-all-room-data", (info: { players: Player[], scramble: string, event: string, actualSolveId: number, allSolves: Solve[] }) => {
     roomPlayers.value = info.players
     scramble.value = info.scramble
     if (document.querySelector('twisty-player') === null) {
@@ -290,7 +291,7 @@ onMounted(() => {
   })
 
   //When all players finishs
-  socket.on("nextSolve", (data: { solveId: number, scramble : string, solveToDisplay : {solveId : number, [idUser : string] : string | number }}) => {
+  socket.on("nextSolve", (data: { solveId: number, scramble : string, solveToDisplay : Solve}) => {
     playerState.value = "READY"
     //I prefer to send only the last solve in order to not surcharge the "nextSolve" data send.
     if (data.solveId === 1) {
@@ -308,11 +309,13 @@ onMounted(() => {
   })
 
   //When owner change the event
-  socket.on("event-updated", (info: { event: string, times: [], scramble: string }) => {
+  socket.on("event-updated", (info: { event: string, scramble: string }) => {
     const eventInfo = mapEvent.get(info.event)!
+
     puzzle.value = eventInfo.toDisplay
-    allSolves.value = info.times
     scramble.value = info.scramble
+
+    allSolves.value = []
     actualSolveId.value = 1
 
     //Maj twisty
@@ -320,9 +323,9 @@ onMounted(() => {
     drawer.value!.alg = scramble.value
   })
 
-  socket.on("session-cleaned", (info: { times: [], solveId: number }) => {
-    allSolves.value = info.times
-    actualSolveId.value = info.solveId
+  socket.on("session-cleaned", () => {
+    allSolves.value = []
+    actualSolveId.value = 1
   })
 })
 

@@ -189,7 +189,6 @@ io.on("connection", (socket) => {
       rooms.set(roomName, room);
       io.to(roomName).emit("event-updated", {
         event: room.event,
-        allSolves: room.allSolves,
         scramble: room.actualScramble,
       });
     }
@@ -202,10 +201,7 @@ io.on("connection", (socket) => {
       room.currentSolve = { solveId: -1 };
       room.allSolves = [];
       room.actualSolveId = 1;
-      io.to(roomName).emit("session-cleaned", {
-        allSolves: room.allSolves,
-        actualSolveId: room.actualSolveId,
-      });
+      io.to(roomName).emit("session-cleaned");
     }
   });
 });
