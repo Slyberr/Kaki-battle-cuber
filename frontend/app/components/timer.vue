@@ -37,6 +37,8 @@ onMounted(() => {
 
 
     if (event.code === 'Space') {
+      //Prevent the scroll
+      event.preventDefault()
       //not refired the key if is too long press
       if (event.repeat) {
         return;
