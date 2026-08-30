@@ -299,8 +299,11 @@ onMounted(() => {
       allSolves.value.unshift(data.solveToDisplay)
     }
 
+    //Refresh scramble
     scramble.value = data.scramble
-    // drawer.value!.alg = scramble.value
+    if (drawer.value) {
+      drawer.value.alg = scramble.value
+    }
     actualSolveId.value = data.solveId
   })
 
