@@ -61,13 +61,6 @@ io.on("connection", (socket) => {
       io.emit("get-rooms", displayRoomsForHomePage(rooms));
     }
 
-    //special case : everyone submit his time but last one disconnected.
-    if (
-      roomName !== "" &&
-      !rooms.get(roomName)?.players.find((player) => player.state === "READY")
-    ) {
-      io.to(roomName).emit("nextSolve", rooms.get(roomName)?.currentSolve);
-    }
     console.log("Bye", socket.id);
   });
 
