@@ -293,7 +293,7 @@ onMounted(() => {
   //When all players finishs
   socket.on("nextSolve", (data: { solveId: number, scramble : string, solveToDisplay : Solve}) => {
     playerState.value = "READY"
-    //I prefer to send only the last solve in order to not surcharge the "nextSolve" data send.
+    //I prefer to send the last solve only in order to not surcharge the "nextSolve" data send.
     if (data.solveId === 1) {
       allSolves.value = [data.solveToDisplay]
     } else {
