@@ -1,5 +1,3 @@
-import tailwindcss from "@tailwindcss/vite";
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
@@ -7,5 +5,11 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/ui','@nuxt/icon'],
   css: ['~/assets/css/main.css'],
-  ssr: false
+  ssr: false,
+
+  runtimeConfig: {
+    public: {
+      socketUrl: "",
+    },
+  }
 });

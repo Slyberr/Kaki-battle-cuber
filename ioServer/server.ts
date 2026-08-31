@@ -10,23 +10,17 @@ import { saveTime } from "./utils/saveTime.js";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+const corsOptions = {
+  origin: "http://localhost:3000",
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const httpServer = createServer(app);
 
 const io: Server = new Server(httpServer, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
+  cors : corsOptions
 });
 
 const rooms: Map<string, Room> = new Map();
