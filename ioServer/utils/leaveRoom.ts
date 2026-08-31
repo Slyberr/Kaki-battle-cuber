@@ -67,7 +67,7 @@ export const leaveRoom = (
     io.to(roomName).emit("remove-player", room.players, userID);
 
     //special case : everyone submit his time but last one disconnected.
-    if (room.players.every((player) => player.state === "SCORE")) {
+    if (room.players.every((player) => player.state === "SCORED")) {
       everyoneScored(rooms,roomName,io);
     } else {
       rooms.set(roomName, room);

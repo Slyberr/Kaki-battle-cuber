@@ -27,8 +27,14 @@
       <p class="text-2xl">{{ puzzle }}</p>
       <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
 
-      <Timer class="mt-10" @time-ok="(time: string) => sendTime(time)" @player-running="() => playerState = 'RUNNING'"
-        :player-state="playerState" :ready-holding-time="readyHoldingTime" :active-inspection="inspection" />
+      <Timer class="mt-10" 
+        
+        :local-player-state="localPlayerState"
+        :ready-holding-time="readyHoldingTime" 
+        :active-inspection="inspection" 
+        @player-change-state="(state: PlayerState) => {socket.emit('change-state',roomName,state, me.id)}"
+        @time-sended="(time: string) => sendTime(time)" 
+        />
       <UDropdownMenu :items="dropDownItems">
 
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
@@ -36,7 +42,8 @@
 
         </template>
       </UDropdownMenu>
-      <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves" :solve-id="actualSolveId"></TabBattle>
+      <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves" :solve-id="actualSolveId">
+      </TabBattle>
       <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
         <UInput type="text" v-model="model"></UInput>
@@ -55,7 +62,7 @@ import TabBattle from '../../components/tabBattle.vue'
 import type { Message } from '../../types/chat.js'
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
-import { type Player } from '~/types/player.ts';
+import { type Player, type PlayerState } from '~/types/player.ts';
 import type { Solve } from '~/types/solve.ts';
 
 const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
@@ -88,7 +95,7 @@ const allSolves = ref<Solve[]>([])
 const scramble = ref<string>("")
 const puzzle = ref<string>("")
 
-const playerState = ref<"READY" | "RUNNING" | "SCORE">("READY")
+const localPlayerState = ref<PlayerState>("READY")
 const readyHoldingTime = ref<number>(0.3)
 const inspection = ref<boolean>(false)
 const drawer = ref<TwistyPlayer>()
@@ -265,8 +272,8 @@ onMounted(() => {
     puzzle.value = mapEvent.get(info.event)?.toDisplay ?? ""
   })
 
-  //When a new player arrived
-  socket.on("new-player", (players: Player[]) => {
+  //new player just come / someone change his state
+  socket.on("players-updated", (players: Player[]) => {
     roomPlayers.value = players
   })
 
@@ -291,8 +298,8 @@ onMounted(() => {
   })
 
   //When all players finishs
-  socket.on("nextSolve", (data: { solveId: number, scramble : string, solveToDisplay : Solve}) => {
-    playerState.value = "READY"
+  socket.on("nextSolve", (data: { solveId: number, scramble: string, solveToDisplay: Solve }) => {
+    localPlayerState.value = "READY"
     //I prefer to send the last solve only in order to not surcharge the "nextSolve" data send.
     if (data.solveId === 1) {
       allSolves.value = [data.solveToDisplay]
@@ -331,7 +338,7 @@ onMounted(() => {
 
 const sendTime = (time: string) => {
   socket.emit("save-time", { roomName: roomName.value, time: time, userId: me.value.id, solveId: actualSolveId.value })
-  playerState.value = "SCORE"
+  localPlayerState.value = "SCORED"
   scramble.value = 'Attente des autres joueurs...'
 }
 
@@ -343,7 +350,7 @@ const leaveRoom = () => {
 onUnmounted(() => {
   document.body.querySelector('twisty-player')?.remove()
   socket.off("send-all-room-data");
-  socket.off("new-player");
+  socket.off("players-updated");
   socket.off("remove-player");
   socket.off("nextSolve");
   socket.off("event-updated");

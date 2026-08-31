@@ -34,4 +34,8 @@ onMounted(() => {
   })
 })
 
+onUnmounted(()=> {
+  socket.off('get-rooms');
+})
+
 </script>

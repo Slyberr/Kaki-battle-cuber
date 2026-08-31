@@ -18,8 +18,9 @@
 <script lang="ts" setup>
 
 import type { RadioGroupItem } from '@nuxt/ui';
+import type { PlayerState } from '~/types/player';
 
-const props = defineProps<{ playerState: "READY" | "RUNNING" | "SCORE", readyHoldingTime: number, activeInspection: boolean }>()
+const props = defineProps<{ localPlayerState: PlayerState, readyHoldingTime: number, activeInspection: boolean }>()
 
 const timer = reactive<{ timeDisplayed: string, state: "NOT_READY" | "INSPECTION" | "READY" | "RUNNING" | "CONFIRM" | "WAITING_OTHER", realTime: number, color: string }>({
   timeDisplayed: "0.00",
@@ -53,92 +54,12 @@ const inspectionValue = ref<number>(15)
 
 const buttonLabel = ref<string>("Confirmer")
 
-const emits = defineEmits(["time-ok", "player-running"])
+const emits = defineEmits(["player-changeState","time-sended"])
 
 onMounted(() => {
   window.addEventListener('keydown', keyDownSpaceManager);
   window.addEventListener('keyup', keyUpSpaceManager);
 })
-
-const saveTime = () => {
-  buttonLabel.value = 'En attente des autres joueurs';
-  timer.state = 'WAITING_OTHER';
-  inspectionPenality.value = "NOTHING";
-  inspectionValue.value = 15;
-
-  emits('time-ok', timer.timeDisplayed)
-}
-
-/**
- * code to create Inspection with penalities (+2 and DNF).
- */
-const beginInspection = () => {
-  timer.state = "INSPECTION";
-  timer.timeDisplayed = inspectionValue.value.toString()
-  inspectionId.value = setInterval(() => {
-    if (inspectionValue.value > 0) {
-      inspectionValue.value--;
-      timer.timeDisplayed = inspectionValue.value.toString()
-    } else if (inspectionValue.value <= 0 && inspectionValue.value > -2) {
-      inspectionValue.value--;
-
-      timer.timeDisplayed = "+2";
-      inspectionPenality.value = "15_17";
-    } else {
-
-      timer.timeDisplayed = "DNF";
-      inspectionPenality.value = "DO_NOT_SOLVE";
-
-      clearInterval(inspectionId.value);
-    }
-
-  }, 1000)
-}
-
-onUnmounted(() => {
-  window.removeEventListener('keyup', keyUpSpaceManager);
-  window.removeEventListener('keydown', keyDownSpaceManager);
-})
-
-/**
- * if the keyup is triggered before x second, do nothing. Else, the timer will start.
- */
-const timerHoldingBeforeGo = () => {
-
-  holdingSpaceId.value = setTimeout(() => {
-    timer.color = "text-emerald-400"
-    timer.state = "READY"
-  }, props.readyHoldingTime * 1000)
-}
-
-//Triggered when all player submit the time on server.
-watch(() => props.playerState, async (newState, oldState) => {
-  if (oldState !== newState && newState == 'READY') {
-    timer.timeDisplayed = '0.00'
-    timer.state = 'NOT_READY'
-    penalitySelected.value = 'OK'
-    buttonLabel.value = "Confirmer"
-  }
-})
-
-watch(() => penalitySelected.value, (newVal) => {
-
-  //If DNF at Inspection : No button enabled (DNF value is selected).
-  if (inspectionPenality.value !== 'DO_NOT_SOLVE') {
-    if (newVal === 'ALIGN_PENAL' && timer.state === 'CONFIRM') {
-      timer.timeDisplayed = inspectionPenality.value === '15_17' ? (timer.realTime + 2).toFixed(2).concat('++') : (timer.realTime + 2).toFixed(2).concat('+')
-    }
-    if (newVal === 'DO_NOT_SOLVE' && timer.state === 'CONFIRM') {
-      timer.timeDisplayed = '('.concat(timer.realTime.toFixed(2), ')', ' DNF')
-    }
-
-    if (newVal === 'OK' && timer.state === 'CONFIRM') {
-      timer.timeDisplayed = inspectionPenality.value === '15_17' ? timer.realTime.toFixed(2).concat('+') : timer.realTime.toFixed(2)
-    }
-  }
-
-})
-
 
 //UTILS don't want to make a utils/UseKeyXSpaceManager beacause lot of variables to send.
 
@@ -171,11 +92,12 @@ const keyUpSpaceManager = (event: KeyboardEvent) => {
       case "READY":
         timer.color = "text-gray-50"
         timer.state = 'RUNNING'
+        emits("player-changeState", "SOLVING");
         if (props.activeInspection) {
           clearInterval(inspectionId.value)
         }
 
-        emits("player-running")
+        
         //Show timer with 0.01 precision.
         const beginTime = Date.now()
         timerIntervalId.value = setInterval(() => {
@@ -237,6 +159,7 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
           timer.timeDisplayed = '('.concat(timer.realTime.toFixed(2), ')', ' DNF')
         }
         timer.state = "CONFIRM"
+        emits('player-changeState', 'CONFIRMATION');
         break;
 
       //This case should never be catch because when Ready on Keyup, the state READY instantly change into INSPECTION
@@ -249,4 +172,84 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
     }
   }
 }
+
+const saveTime = () => {
+  buttonLabel.value = 'En attente des autres joueurs';
+  timer.state = 'WAITING_OTHER';
+  inspectionPenality.value = "NOTHING";
+  inspectionValue.value = 15;
+
+  emits('time-sended', timer.timeDisplayed)
+}
+
+/**
+ * code to create Inspection with penalities (+2 and DNF).
+ */
+const beginInspection = () => {
+  timer.state = "INSPECTION";
+  emits('player-changeState','INSPECTING');
+  timer.timeDisplayed = inspectionValue.value.toString()
+  inspectionId.value = setInterval(() => {
+    if (inspectionValue.value > 0) {
+      inspectionValue.value--;
+      timer.timeDisplayed = inspectionValue.value.toString()
+    } else if (inspectionValue.value <= 0 && inspectionValue.value > -2) {
+      inspectionValue.value--;
+
+      timer.timeDisplayed = "+2";
+      inspectionPenality.value = "15_17";
+    } else {
+
+      timer.timeDisplayed = "DNF";
+      inspectionPenality.value = "DO_NOT_SOLVE";
+
+      clearInterval(inspectionId.value);
+    }
+
+  }, 1000)
+}
+
+onUnmounted(() => {
+  window.removeEventListener('keyup', keyUpSpaceManager);
+  window.removeEventListener('keydown', keyDownSpaceManager);
+})
+
+/**
+ * if the keyup is triggered before x second, do nothing. Else, the timer will start.
+ */
+const timerHoldingBeforeGo = () => {
+
+  holdingSpaceId.value = setTimeout(() => {
+    timer.color = "text-emerald-400"
+    timer.state = "READY"
+  }, props.readyHoldingTime * 1000)
+}
+
+//Triggered when all player submit the time on server.
+watch(() => props.localPlayerState, async (newState, oldState) => {
+  if (oldState !== newState && newState == 'READY') {
+    timer.timeDisplayed = '0.00'
+    timer.state = 'NOT_READY'
+    penalitySelected.value = 'OK'
+    buttonLabel.value = "Confirmer"
+  }
+})
+
+watch(() => penalitySelected.value, (newVal) => {
+
+  //If DNF at Inspection : No button enabled (DNF value is selected).
+  if (inspectionPenality.value !== 'DO_NOT_SOLVE') {
+    if (newVal === 'ALIGN_PENAL' && timer.state === 'CONFIRM') {
+      timer.timeDisplayed = inspectionPenality.value === '15_17' ? (timer.realTime + 2).toFixed(2).concat('++') : (timer.realTime + 2).toFixed(2).concat('+')
+    }
+    if (newVal === 'DO_NOT_SOLVE' && timer.state === 'CONFIRM') {
+      timer.timeDisplayed = '('.concat(timer.realTime.toFixed(2), ')', ' DNF')
+    }
+
+    if (newVal === 'OK' && timer.state === 'CONFIRM') {
+      timer.timeDisplayed = inspectionPenality.value === '15_17' ? timer.realTime.toFixed(2).concat('+') : timer.realTime.toFixed(2)
+    }
+  }
+
+})
 </script>

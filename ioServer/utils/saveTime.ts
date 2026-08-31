@@ -35,14 +35,14 @@ export const saveTime = async (
 
       //add player time
       room.currentSolve[userId] = time;
-      player.state = "SCORE";
+      player.state = "SCORED";
+      rooms.set(roomName,room)
+      io.to(roomName).emit('players-updated', room.players);
 
       //If everyone in this room submit his time
-      if (room.players.every((player) => player.state === "SCORE")) {
+      if (room.players.every((player) => player.state === "SCORED")) {
         everyoneScored(rooms,roomName,io);
-      } else {
-        rooms.set(roomName,room)
-      }
+      } 
     }
   }
 };
