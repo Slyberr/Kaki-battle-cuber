@@ -72,7 +72,7 @@ io.on("connection", (socket) => {
         //Create socket.io Room and a room
         socket.join(room.roomName);
         rooms.set(room.roomName, {
-          password: room.password,
+          password: room.isPrivate ? room.password : undefined, 
           isPrivate : room.isPrivate,
           players: [
             { id: socket.id, pseudo: room.pseudo, owner: true, state: "READY" },
@@ -106,7 +106,7 @@ io.on("connection", (socket) => {
     (info: { roomName: string; password: string; pseudo: string }) => {
       const room = rooms.get(info.roomName);
 
-      if (room && room.password !== info.password) {
+      if (room && room.isPrivate && room.password !== info.password) {
         socket.emit("error", "mot de passe incorrect !");
       } else if (
         room &&

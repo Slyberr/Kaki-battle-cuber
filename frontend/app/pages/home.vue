@@ -20,7 +20,7 @@
           <UFormField label="Privée ?" name="prive">
             <UCheckbox v-model="state.isPrivate"></UCheckbox>
           </UFormField>
-          
+
           <template v-if="state.isPrivate">
             <UFormField label="Mot de passe" name="password">
               <UInput type="password" v-model="state.password"></UInput>
@@ -38,30 +38,41 @@
       <div class="flex justify-center">
         <UButton class="relative" icon="lucide:users">Rejoindre une room</UButton>
       </div>
-      <template #content>
-        <p class="text-xl m-2">{{ (rooms.length) }} Rooms actives</p>
-        <div class="flex" v-for="room in rooms">
+      <template #content >
+        
+        <div class="overflow-auto h-full">
+          <p class="text-xl m-2">{{ (rooms.length) }} Rooms actives</p>
+        <div class="flex " v-for="room in rooms">
 
-          <UModal>
-            <div class="flex justify-between w-full m-2">
-              <p class="self-center">{{ room.roomName }}</p>
-              <p class="self-center">{{ room.length }} <UIcon name="lucide:users"></UIcon>
-              </p>
+          <UModal class="px-3">
+            <div class="grid grid-cols-[3fr_3fr_1fr] w-full py-5">
+              <div class="flex items-center gap-4">
+                <p class="self-center">{{ room.roomName }}</p>
+                <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'"></UIcon>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <p>{{ room.length }}</p> 
+                <UIcon name="lucide:users"></UIcon>
+            </div>
               <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
             </div>
             <template #content>
               <p class="text-center text-xl">{{ room.roomName }}</p>
               <UForm :state="stateJoin" class="m-8 space-y-4" @submit="joinRoom(room.roomName)">
-                <UFormField label="Mot de passe" name="password">
-                  <UInput type="password" v-model="stateJoin.password"></UInput>
-                </UFormField>
+               
                 <UFormField label="Votre pseudo" name="pseudo">
                   <UInput type="input" v-model="stateJoin.pseudo"></UInput>
+                </UFormField>
+                 <UFormField v-if="room.isPrivate" label="Mot de passe" name="password">
+                  <UInput type="password" v-model="stateJoin.password"></UInput>
                 </UFormField>
                 <UButton type="submit">Accéder à la salle</UButton>
               </UForm>
             </template>
+            
           </UModal>
+        </div>
         </div>
         <UForm :schema="schema" :state="state" class="m-8 space-y-4" @submit="">
 
@@ -77,13 +88,8 @@
 
 import * as v from 'valibot'
 
-const rooms = useState<{ roomName: string, length: number }[]>('rooms')
+const rooms = useState<{ roomName: string, isPrivate: boolean, length: number }[]>('rooms')
 
-const schema = v.object({
-  roomname: v.pipe(v.string(), v.minLength(4, "Le nom doit au moins faire 4 caractères")),
-  password: v.pipe(v.string(), v.minLength(4, "le mot de passe doit faire au moins 4 caractères")),
-  pseudo: v.pipe(v.string(), v.minLength(1, "Votre pseudo ne doit pas être vide !")),
-})
 
 const state = reactive<{ roomname: string, isPrivate: false, password: string, pseudo: string }>({
   roomname: "",
@@ -96,6 +102,16 @@ const stateJoin = reactive<{ password: string, pseudo: string }>({
   password: "",
   pseudo: "",
 })
+
+
+const schema = v.object({
+  roomname: v.pipe(v.string(), v.minLength(4, "Le nom doit au moins faire 4 caractères")),
+  password: state.isPrivate ? v.pipe(v.string(), v.minLength(4, "le mot de passe doit faire au moins 4 caractères")) : v.pipe(v.string(), v.minLength(0)),
+  pseudo: v.pipe(v.string(), v.minLength(1, "Votre pseudo ne doit pas être vide !")),
+})
+
+
+
 
 
 definePageMeta({
@@ -132,7 +148,7 @@ const createRoom = async () => {
   if (socket !== null) {
     socket.emit("create-room", {
       roomName: state.roomname,
-      isPrivate : state.isPrivate,
+      isPrivate: state.isPrivate,
       password: state.password,
       pseudo: state.pseudo
     });
