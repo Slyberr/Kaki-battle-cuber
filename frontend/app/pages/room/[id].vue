@@ -35,7 +35,7 @@
         @player-change-state="(state: PlayerState) => {socket.emit('change-state',roomName,state, me.id)}"
         @time-sended="(time: string) => sendTime(time)" 
         />
-      <UDropdownMenu :items="dropDownItems">
+      <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
 
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
         <template #content>
@@ -104,6 +104,7 @@ const actualSolveId = ref<number>(1)
 const model = defineModel<string>()
 const conv = ref<Message[]>([])
 
+const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player)=> player.state === 'READY'))
 const dropDownItems = computed((): DropdownMenuItem[][] => {
 
   const menuForEveryone: DropdownMenuItem[][] = [
