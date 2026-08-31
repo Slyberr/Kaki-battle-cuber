@@ -5,7 +5,7 @@
 
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { Player } from '~/types/player';
+import type { Player, PlayerState } from '~/types/player';
 import type { Solve } from '~/types/solve';
 
 
@@ -22,11 +22,28 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
 
     ]
     for (let player of props.players) {
-        mainColumns.push({ accessorKey: player.id, header: player.pseudo })
+        mainColumns.push({ accessorKey: player.id , header: player.pseudo + stateForHuman(player.state)  })
     }
     return mainColumns
 
 })
+
+const stateForHuman = (state : PlayerState) => {
+
+    switch  (state){
+        case 'READY' :
+            return ' (prêt)'
+        case 'INSPECTING' :
+            return ' (inspection...)'
+        case 'SOLVING' :
+            return ' (résolution...)'
+        case 'CONFIRMATION' :
+            return ' (confirmation...)'
+        case 'SCORED' :
+            return ' (fini !)' 
+
+    }
+}
 
 
 

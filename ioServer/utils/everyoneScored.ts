@@ -25,7 +25,7 @@ export const everyoneScored = async (
     room.actualScramble = newScramble;
     room.actualSolveId++;
     room.players.map((player) => (player.state = "READY"));
-
+    io.to(roomName).emit('players-updated', room.players);
     io.to(roomName).emit("nextSolve", {
       solveToDisplay: room.currentSolve,
       scramble: newScramble,

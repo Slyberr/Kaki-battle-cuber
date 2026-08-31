@@ -3,7 +3,7 @@ import { Server } from "socket.io";
 import express from "express";
 import cors from "cors";
 import { randomScrambleForEvent } from "cubing/scramble";
-import { Player, Room } from "./types/types.js";
+import { Player, PlayerState, Room } from "./types/types.js";
 import { leaveRoom } from "./utils/leaveRoom.js";
 import { displayRoomsForHomePage } from "./utils/displayRoomsForHomePage.js";
 import { saveTime } from "./utils/saveTime.js";
@@ -67,13 +67,18 @@ io.on("connection", (socket) => {
   //Create room
   socket.on(
     "create-room",
-    async (room: { roomName: string;isPrivate : boolean, password: string; pseudo: string }) => {
+    async (room: {
+      roomName: string;
+      isPrivate: boolean;
+      password: string;
+      pseudo: string;
+    }) => {
       if (!rooms.get(room.roomName)) {
         //Create socket.io Room and a room
         socket.join(room.roomName);
         rooms.set(room.roomName, {
-          password: room.isPrivate ? room.password : undefined, 
-          isPrivate : room.isPrivate,
+          password: room.isPrivate ? room.password : undefined,
+          isPrivate: room.isPrivate,
           players: [
             { id: socket.id, pseudo: room.pseudo, owner: true, state: "READY" },
           ],
@@ -88,7 +93,7 @@ io.on("connection", (socket) => {
 
         //when a new player come (event for players already in room)
         io.to(room.roomName).emit(
-          "new-player",
+          "players-updated",
           rooms.get(room.roomName)?.players,
         );
 
@@ -131,7 +136,7 @@ io.on("connection", (socket) => {
         io.emit("get-rooms", displayRoomsForHomePage(rooms));
 
         //when a new player come (event for players already in room)
-        io.to(info.roomName).emit("new-player", room.players);
+        io.to(info.roomName).emit("players-updated", room.players);
       }
     },
   );
@@ -157,6 +162,24 @@ io.on("connection", (socket) => {
       });
     }
   });
+  //When a player juste change his state (solving, inspecting...)
+  socket.on(
+    "change-state",
+    (roomName: string, state: PlayerState, userId: string) => {
+        const room = rooms.get(roomName);
+
+        if (room) {
+          const player = room.players.find((player) => player.id === userId)
+          if (player) {
+            player.state = state;
+            io.to(roomName).emit("players-updated",room.players);
+            rooms.set(roomName,room);
+          }
+        }
+    },
+
+  
+  );
 
   //When a player just submit his time
   socket.on(
@@ -167,7 +190,14 @@ io.on("connection", (socket) => {
       userId: string;
       solveId: number;
     }) => {
-      await saveTime(info.roomName, rooms, io, info.time, info.userId, info.solveId);
+      await saveTime(
+        info.roomName,
+        rooms,
+        io,
+        info.time,
+        info.userId,
+        info.solveId,
+      );
     },
   );
 
