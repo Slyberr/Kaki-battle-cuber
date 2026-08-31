@@ -332,6 +332,7 @@ onMounted(() => {
 const sendTime = (time: string) => {
   socket.emit("save-time", { roomName: roomName.value, time: time, userId: me.value.id, solveId: actualSolveId.value })
   playerState.value = "SCORE"
+  scramble.value = 'Attente des autres joueurs...'
 }
 
 const leaveRoom = () => {
