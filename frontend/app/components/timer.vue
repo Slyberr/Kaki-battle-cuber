@@ -1,5 +1,5 @@
 <template>
-  <div class="timer w-full flex justify-center min-h-25">
+  <div class="timer w-full flex justify-center min-h-42">
     <div class="flex flex-col items-center gap-3 ">
       <div class="text-4xl transition ease-linear duration-75" :class=timer.color>{{ timer.timeDisplayed }}</div>
       <template v-if="timer.state === 'CONFIRM'">
@@ -7,8 +7,7 @@
           :disabled="inspectionPenality === 'DO_NOT_SOLVE'" variant="card" indicator="hidden" orientation="horizontal"
           :ui="{ container: 'max-h-2' }">
         </URadioGroup>
-        <UButton class="my-2" @click="saveTime" :loading="waitOtherPlayer" :label="buttonLabel"
-          :disabled="penalitySelected === ''"></UButton>
+        <UButton class="my-2" @click="saveTime" :loading="waitOtherPlayer" :label="buttonLabel"></UButton>
 
       </template>
     </div>
@@ -42,7 +41,7 @@ const radioSolvePenalities = ref<RadioGroupItem[]>([
     value: 'DO_NOT_SOLVE'
   }
 ])
-const penalitySelected = ref<'OK' | 'ALIGN_PENAL' | 'DO_NOT_SOLVE' | ''>('');
+const penalitySelected = ref<'OK' | 'ALIGN_PENAL' | 'DO_NOT_SOLVE' >('OK');
 
 const timerIntervalId = ref<NodeJS.Timeout>()
 const inspectionId = ref<NodeJS.Timeout>()
@@ -172,7 +171,7 @@ const saveTime = () => {
   buttonLabel.value = 'En attente des autres joueurs';
   inspectionPenality.value = "NOTHING";
   inspectionValue.value = 15;
-  penalitySelected.value = '';
+  penalitySelected.value = 'OK';
 
   emits('time-ok', timer.timeDisplayed)
 }
@@ -236,7 +235,7 @@ watch(() => penalitySelected.value, (newVal) => {
     }
 
     if (newVal === 'OK') {
-      timer.timeDisplayed = inspectionPenality.value === '15_17' ? timer.timeDisplayed = timer.realTime.toString().concat('+') : timer.realTime.toString()
+      timer.timeDisplayed = inspectionPenality.value === '15_17' ?  timer.realTime.toFixed(2).concat('+') : timer.realTime.toFixed(2)
     }
   } 
 
