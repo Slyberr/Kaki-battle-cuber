@@ -67,12 +67,13 @@ io.on("connection", (socket) => {
   //Create room
   socket.on(
     "create-room",
-    async (room: { roomName: string; password: string; pseudo: string }) => {
+    async (room: { roomName: string;isPrivate : boolean, password: string; pseudo: string }) => {
       if (!rooms.get(room.roomName)) {
         //Create socket.io Room and a room
         socket.join(room.roomName);
         rooms.set(room.roomName, {
           password: room.password,
+          isPrivate : room.isPrivate,
           players: [
             { id: socket.id, pseudo: room.pseudo, owner: true, state: "READY" },
           ],

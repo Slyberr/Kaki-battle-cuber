@@ -11,7 +11,8 @@ export type Solve = {
 }
 
 export type Room = {
-  password: string;
+  password?: string;
+  isPrivate : boolean
   players: Player[];
   nbrPlayers: number;
   currentSolve: Solve;

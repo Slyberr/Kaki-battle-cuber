@@ -10,17 +10,24 @@
         <UButton class="relative" icon="lucide:plus">Créer une nouvelle room</UButton>
       </div>
       <template #content>
-        <UForm :schema="schema" :state="state" class="m-8 space-y-4" @submit="createRoom">
+        <UForm :schema="schema" :state="state" class="flex flex-col m-8 space-y-4 min-h-[45dvh]" @submit="createRoom">
           <UFormField label="Nom de la salle" name="roomname">
             <UInput v-model="state.roomname"></UInput>
-          </UFormField>
-          <UFormField label="Mot de passe" name="password">
-            <UInput type="password" v-model="state.password"></UInput>
           </UFormField>
           <UFormField label="Votre pseudo" name="pseudo">
             <UInput type="input" v-model="state.pseudo"></UInput>
           </UFormField>
-          <UButton type="submit">Créer et accéder à la salle</UButton>
+          <UFormField label="Privée ?" name="prive">
+            <UCheckbox v-model="state.isPrivate"></UCheckbox>
+          </UFormField>
+          
+          <template v-if="state.isPrivate">
+            <UFormField label="Mot de passe" name="password">
+              <UInput type="password" v-model="state.password"></UInput>
+            </UFormField>
+          </template>
+
+          <UButton type="submit" class="flex self-start justify-self-end">Créer et accéder à la salle</UButton>
         </UForm>
       </template>
     </UModal>
@@ -78,8 +85,9 @@ const schema = v.object({
   pseudo: v.pipe(v.string(), v.minLength(1, "Votre pseudo ne doit pas être vide !")),
 })
 
-const state = reactive<{ roomname: string, password: string, pseudo: string }>({
+const state = reactive<{ roomname: string, isPrivate: false, password: string, pseudo: string }>({
   roomname: "",
+  isPrivate: false,
   password: "",
   pseudo: ""
 })
@@ -124,6 +132,7 @@ const createRoom = async () => {
   if (socket !== null) {
     socket.emit("create-room", {
       roomName: state.roomname,
+      isPrivate : state.isPrivate,
       password: state.password,
       pseudo: state.pseudo
     });
