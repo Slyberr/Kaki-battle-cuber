@@ -26,8 +26,6 @@
       </template>
     </div>
   </div>
-   {{ timer.state }}
-   {{ inputMode }}
 </template>
 
 <script lang="ts" setup>

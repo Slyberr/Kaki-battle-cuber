@@ -104,11 +104,12 @@ const stateJoin = reactive<{ password: string, pseudo: string }>({
 })
 
 
-const schema = v.object({
+const schema = computed(() => v.object({
   roomname: v.pipe(v.string(), v.minLength(4, "Le nom doit au moins faire 4 caractères")),
   password: state.isPrivate ? v.pipe(v.string(), v.minLength(4, "le mot de passe doit faire au moins 4 caractères")) : v.pipe(v.string(), v.minLength(0)),
   pseudo: v.pipe(v.string(), v.minLength(1, "Votre pseudo ne doit pas être vide !")),
 })
+)
 
 
 
