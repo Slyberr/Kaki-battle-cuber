@@ -1,25 +1,36 @@
-import { createServer } from "http";
-import { Server } from "socket.io";
+import { createServer } from "https";
+import { Server, ServerOptions } from "socket.io";
 import express from "express";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import { randomScrambleForEvent } from "cubing/scramble";
 import { Player, PlayerState, Room } from "./types/types.js";
 import { leaveRoom } from "./utils/leaveRoom.js";
 import { displayRoomsForHomePage } from "./utils/displayRoomsForHomePage.js";
 import { saveTime } from "./utils/saveTime.js";
+import { isOwner } from "./utils/isOwner.js";
+import { readFileSync } from "fs";
 
-const app = express();
 
-const corsOptions = {
-  origin: "http://localhost:3000",
-};
+const options = {
+  key : readFileSync('key.pem'),
+  cert : readFileSync('cert.pem')
+}
 
-app.use(cors(corsOptions));
-app.use(express.json());
+const corsOptions  : CorsOptions = {
+  origin: "*",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}
 
-const httpServer = createServer(app);
 
-const io: Server = new Server(httpServer, {
+const httpsServer = createServer(options,(req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("OK");
+});
+
+
+const io: Server = new Server(httpsServer, {
   cors : corsOptions
 });
 
@@ -50,7 +61,7 @@ io.on("connection", (socket) => {
     });
 
     if (indexToRemove !== null) {
-      leaveRoom(socket, roomName, rooms, io, socket.id, true);
+      leaveRoom(socket, roomName, rooms, io, true);
       //Emit to EVERYONE rooms updated
       io.emit("get-rooms", displayRoomsForHomePage(rooms));
     }
@@ -136,8 +147,8 @@ io.on("connection", (socket) => {
   );
 
   //Leave a room (only one room by player)
-  socket.on("leave-room", (user: Player, roomName: string) => {
-    leaveRoom(socket, roomName, rooms, io, user.id, false);
+  socket.on("leave-room", (roomName: string) => {
+    leaveRoom(socket, roomName, rooms, io, false);
     //Emit to EVERYONE rooms updated
     io.emit("get-rooms", displayRoomsForHomePage(rooms));
   });
@@ -159,11 +170,11 @@ io.on("connection", (socket) => {
   //When a player juste change his state (solving, inspecting...)
   socket.on(
     "change-state",
-    (roomName: string, state: PlayerState, userId: string) => {
+    (roomName: string, state: PlayerState) => {
         const room = rooms.get(roomName);
 
         if (room) {
-          const player = room.players.find((player) => player.id === userId)
+          const player = room.players.find((player) => player.id === socket.id)
           if (player) {
             player.state = state;
             io.to(roomName).emit("players-updated",room.players);
@@ -181,7 +192,6 @@ io.on("connection", (socket) => {
     async (info: {
       roomName: string;
       time: string;
-      userId: string;
       solveId: number;
     }) => {
       await saveTime(
@@ -189,7 +199,7 @@ io.on("connection", (socket) => {
         rooms,
         io,
         info.time,
-        info.userId,
+        socket.id,
         info.solveId,
       );
     },
@@ -198,7 +208,7 @@ io.on("connection", (socket) => {
   //when event is updated
   socket.on("update-event", async (event, roomName) => {
     const room = rooms.get(roomName);
-    if (room) {
+    if (room && isOwner(socket.id,rooms,roomName)) {
       room.event = event;
       room.currentSolve = { solveId: -1 };
       room.allSolves = [];
@@ -209,21 +219,25 @@ io.on("connection", (socket) => {
         event: room.event,
         scramble: room.actualScramble,
       });
+    }else {
+      socket.emit("error","Vous n'avez pas les droits de faire cette action.")
     }
   });
 
   //When owner clear session
   socket.on("clear-session", (roomName) => {
     const room = rooms.get(roomName);
-    if (room) {
+    if (room && isOwner(socket.id,rooms,roomName)) {
       room.currentSolve = { solveId: -1 };
       room.allSolves = [];
       room.actualSolveId = 1;
       io.to(roomName).emit("session-cleaned");
+    } else {
+      socket.emit("error","Vous n'avez pas les droits de faire cette action.")
     }
   });
 });
 
-httpServer.listen(3001, () => {
-  console.log("Realtime server listening on :3001");
+httpsServer.listen(3001, () => {
+  console.log("Server OK ! Go on https://localhost:3001");
 });

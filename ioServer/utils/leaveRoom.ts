@@ -6,7 +6,8 @@ import { everyoneScored } from "./everyoneScored.js";
  * Buisness logic when a user leave a room (by the normal case or disconnection)
  * @param mySocket
  * @param roomName
- * @param userID
+ * @param rooms
+ * @param roomName
  * @param disconnected True if he leave or reload the page. False if he just leave the room.
  */
 export const leaveRoom = (
@@ -14,7 +15,6 @@ export const leaveRoom = (
   roomName: string,
   rooms: Map<string, Room>,
   io: Server,
-  userID: string,
   disconnected: boolean,
 ) => {
   if (!disconnected) {
@@ -27,7 +27,7 @@ export const leaveRoom = (
     let wasOwner = false;
 
     const roomWithoutleaver = room.players.filter((player: Player) => {
-      if (player.id === userID) {
+      if (player.id === mySocket.id) {
         wasOwner = player.owner;
         return false;
       } else {
@@ -39,7 +39,7 @@ export const leaveRoom = (
 
     //performance + when user leave room but not disconnect, ID is same so times come back. Actually, i don't want this.
     room.allSolves.forEach((time) => {
-      delete time[userID];
+      delete time[mySocket.id];
     });
 
     if (roomWithoutleaver.length === 0) {
@@ -64,7 +64,7 @@ export const leaveRoom = (
     }
 
     //Stop display the leaver player and update the room.
-    io.to(roomName).emit("remove-player", room.players, userID);
+    io.to(roomName).emit("remove-player", room.players, mySocket.id);
 
     //special case : everyone submit his time but last one disconnected.
     if (room.players.every((player) => player.state === "SCORED")) {
