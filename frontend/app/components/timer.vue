@@ -1,18 +1,33 @@
 <template>
   <div class="timer w-full flex justify-center min-h-42">
-    <div class="flex flex-col items-center gap-3 ">
+    <div v-if="inputMode === 'KEYBOARD'" class="flex flex-col items-center gap-3 ">
+
       <div class="text-4xl transition ease-linear duration-75" :class=timer.color>{{ timer.timeDisplayed }}</div>
       <template v-if="timer.state === 'CONFIRM' || timer.state === 'WAITING_OTHER'">
-          <URadioGroup v-model:model-value="penalitySelected" :items="radioSolvePenalities"
-            :disabled="inspectionPenality === 'DO_NOT_SOLVE' || timer.state === 'WAITING_OTHER'" variant="card" indicator="hidden" orientation="horizontal"
-            :ui="{ container: 'max-h-2' }">
-          </URadioGroup>
-        <UButton class="my-2" @click="saveTime" :loading="timer.state === 'WAITING_OTHER'" :label="buttonLabel">
+        <URadioGroup v-model:model-value="penalitySelected" :items="radioSolvePenalities"
+          :disabled="inspectionPenality === 'DO_NOT_SOLVE' || timer.state === 'WAITING_OTHER'" variant="card"
+          indicator="hidden" orientation="horizontal" :ui="{ container: 'max-h-2' }">
+        </URadioGroup>
+        <UButton class="my-2" :loading="timer.state === 'WAITING_OTHER'" :label="buttonLabel" @click="saveTime">
         </UButton>
-
+      </template>
+    </div>
+    <div class="flex flex-col w-[25%]" v-if="inputMode === 'MANUALLY'">
+      <template v-if="activeInspection && (timer.state === 'BEGIN_STATE' || timer.state === 'INSPECTION')">
+        <div class="text-4xl transition ease-linear duration-75 text-center" :class=timer.color>{{ timer.timeDisplayed
+          }}</div>
+      </template>
+      <template v-else>
+        <UInput v-model:model-value="manualTime.input" placeholder="Only Digit or 'DNF'." class="w-full" color="primary"
+          maxlength="6" :disabled="manualTime.disabled">
+        </UInput>
+        <p>{{ 'Votre temps est : ' + isTimeFormatOk(manualTime.input)[1] }}</p>
+       
       </template>
     </div>
   </div>
+   {{ timer.state }}
+   {{ inputMode }}
 </template>
 
 <script lang="ts" setup>
@@ -20,13 +35,17 @@
 import type { RadioGroupItem } from '@nuxt/ui';
 import type { PlayerState } from '~/types/player';
 
-const props = defineProps<{ localPlayerState: PlayerState, readyHoldingTime: number, activeInspection: boolean }>()
+const props = defineProps<{ localPlayerState: PlayerState, readyHoldingTime: number, activeInspection: boolean, inputMode: "KEYBOARD" | "MANUALLY" }>()
 
-const timer = reactive<{ timeDisplayed: string, state: "NOT_READY" | "INSPECTION" | "READY" | "RUNNING" | "CONFIRM" | "WAITING_OTHER", realTime: number, color: string }>({
+const timer = reactive<{ timeDisplayed: string, state: "BEGIN_STATE" | "INSPECTION" | "READY_TO-SOLVE" | "RUNNING" | "CONFIRM" | "WAITING_OTHER", realTime: number, color: string }>({
   timeDisplayed: "0.00",
   realTime: 0.00,
-  state: "NOT_READY",
+  state: "BEGIN_STATE",
   color: "text-gray-50"
+})
+const manualTime = reactive<{ input: string, disabled: boolean }>({
+  input: "",
+  disabled: false
 })
 
 const radioSolvePenalities = ref<RadioGroupItem[]>([
@@ -43,74 +62,93 @@ const radioSolvePenalities = ref<RadioGroupItem[]>([
     value: 'DO_NOT_SOLVE'
   }
 ])
-const penalitySelected = ref<'OK' | 'ALIGN_PENAL' | 'DO_NOT_SOLVE'>('OK');
 
 const timerIntervalId = ref<NodeJS.Timeout>()
-const inspectionId = ref<NodeJS.Timeout>()
-const inspectionPenality = ref<"DO_NOT_SOLVE" | "15_17" | "NOTHING">("NOTHING");
 const holdingSpaceId = ref<NodeJS.Timeout>()
+const inspectionId = ref<NodeJS.Timeout>()
 
-const inspectionValue = ref<number>(15)
-
+const penalitySelected = ref<'OK' | 'ALIGN_PENAL' | 'DO_NOT_SOLVE'>('OK');
 const buttonLabel = ref<string>("Confirmer")
 
-const emits = defineEmits(["player-changeState","time-sended"])
+const inspectionValue = ref<number>(15)
+const inspectionPenality = ref<"DO_NOT_SOLVE" | "15_17" | "NOTHING">("NOTHING");
+
+const emits = defineEmits(["player-changeState", "time-sended"])
 
 onMounted(() => {
   window.addEventListener('keydown', keyDownSpaceManager);
   window.addEventListener('keyup', keyUpSpaceManager);
+  window.addEventListener('keydown', onKeyDownEnter);
 })
+
+
 
 //UTILS don't want to make a utils/UseKeyXSpaceManager beacause lot of variables to send.
 
 const keyUpSpaceManager = (event: KeyboardEvent) => {
 
   if (event.code === 'Space') {
-    switch (timer.state) {
 
-      case "NOT_READY":
-        //not depending to holding time value.
-        if (props.activeInspection) {
-          beginInspection()
-        } else {
-          //press bar not pressed enough (when inspection disactivated)
+    if (props.inputMode === 'KEYBOARD') {
+      switch (timer.state) {
+        case "BEGIN_STATE":
+          //not depending to holding time value.
+          if (props.activeInspection) {
+            beginInspection()
+          } else {
+            //press bar not pressed enough (when inspection disactivated)
+            timer.color = "text-gray-50"
+            clearInterval(holdingSpaceId.value)
+          }
+
+          break;
+        case "INSPECTION":
+          //press bar not pressed enough (when inspection activated)
+          if (props.activeInspection) {
+            timer.color = "text-gray-50"
+            clearInterval(holdingSpaceId.value)
+          }
+
+          break;
+        //When user pressed space bar enough to start the timer.
+        case "READY_TO-SOLVE":
           timer.color = "text-gray-50"
-          clearInterval(holdingSpaceId.value)
-        }
+          timer.state = 'RUNNING'
+          emits("player-changeState", "SOLVING");
+          if (props.activeInspection) {
+            clearInterval(inspectionId.value)
+          }
 
-        break;
-      case "INSPECTION":
-        //press bar not pressed enough (when inspection activated)
-        if (props.activeInspection) {
-          timer.color = "text-gray-50"
-          clearInterval(holdingSpaceId.value)
-        }
+          //Show timer with 0.01 precision.
+          const beginTime = Date.now()
+          timerIntervalId.value = setInterval(() => {
+            timer.timeDisplayed = useTimeForHuman(beginTime)
+          }, 10)
 
-        break;
+          break;
+        case "RUNNING":
+        case "CONFIRM":
+          break
+      }
+    }
 
-      //When user pressed space bar enough to start the timer.
-      case "READY":
-        timer.color = "text-gray-50"
-        timer.state = 'RUNNING'
-        emits("player-changeState", "SOLVING");
-        if (props.activeInspection) {
-          clearInterval(inspectionId.value)
-        }
-
-        
-        //Show timer with 0.01 precision.
-        const beginTime = Date.now()
-        timerIntervalId.value = setInterval(() => {
-          timer.timeDisplayed = useTimeForHuman(beginTime)
-        }, 10)
-
-        break;
-
-      //This case should never be catch because when RUNNING on keydown the state RUNNING instantly change into "CONFIRM"
-      case "RUNNING":
-        break
-      case "CONFIRM":
-        break
+    if (props.inputMode === 'MANUALLY') {
+      switch (timer.state) {
+        case 'BEGIN_STATE':
+          if (props.activeInspection) {
+            beginInspection()
+          }
+          break;
+        //For fast event: the user can space one more time to skip the all inspection.
+        case 'INSPECTION':
+          if (props.activeInspection) {
+            clearInterval(inspectionId.value)
+            timer.state = 'CONFIRM';
+            emits('player-changeState', 'CONFIRMATION');
+            
+          }
+          break;
+      }
     }
   }
 }
@@ -124,94 +162,141 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
     if (event.repeat) {
       return;
     }
-    switch (timer.state) {
-      //Do something on keydown only if inspection is disactived.
-      case "NOT_READY":
+    //KeyBoard mode 
+    if (props.inputMode === 'KEYBOARD') {
 
-        if (!props.activeInspection) {
-          timer.color = "text-red-400"
-          timerHoldingBeforeGo()
-        }
+      switch (timer.state) {
+        case "BEGIN_STATE":
+          if (!props.activeInspection) {
+            timer.color = "text-red-400";
+            timerHoldingBeforeGo()
+          }
+          break;
+        case "INSPECTION":
+          if (props.activeInspection) {
+            timer.color = "text-red-400"
+            timerHoldingBeforeGo()
+            break;
+          }
+         
 
-        break;
+        //When timer is stopped (keydown).
+        case "RUNNING":
+          clearInterval(timerIntervalId.value);
+          //Save the score.
+          timer.realTime = parseFloat(timer.timeDisplayed);
+          if (inspectionPenality.value === "15_17") {
+            timer.realTime += 2;
+            timer.timeDisplayed = (timer.realTime).toFixed(2).concat('+');
+          }
+          if (inspectionPenality.value === 'DO_NOT_SOLVE') {
+            penalitySelected.value = 'DO_NOT_SOLVE';
+            timer.timeDisplayed = '('.concat(timer.realTime.toFixed(2), ')', ' DNF')
+          }
+          timer.state = "CONFIRM"
+          emits('player-changeState', 'CONFIRMATION');
 
-      //catched only if beginInspection() called (on NOT_READY keyup). Do the same thing like "NOT-READY" ^
-      case "INSPECTION":
+          break;
 
-        if (props.activeInspection) {
-          timer.color = "text-red-400"
-          timerHoldingBeforeGo()
-        }
-
-        break;
-
-      //When timer is stopped (keydown).
-      case "RUNNING":
-        clearInterval(timerIntervalId.value);
-        //Save the score.
-        timer.realTime = parseFloat(timer.timeDisplayed);
-        if (inspectionPenality.value === "15_17") {
-          timer.realTime += 2;
-          timer.timeDisplayed = (timer.realTime).toFixed(2).concat('+');
-        }
-        if (inspectionPenality.value === 'DO_NOT_SOLVE') {
-          penalitySelected.value = 'DO_NOT_SOLVE';
-          timer.timeDisplayed = '('.concat(timer.realTime.toFixed(2), ')', ' DNF')
-        }
-        timer.state = "CONFIRM"
-        emits('player-changeState', 'CONFIRMATION');
-        break;
-
-      //This case should never be catch because when Ready on Keyup, the state READY instantly change into INSPECTION
-      case "READY":
-
-        break;
-
-      case "CONFIRM":
-        break;
+        case "READY_TO-SOLVE":
+        case "CONFIRM":
+          break;
+      }
     }
   }
 }
 
-const saveTime = () => {
-  buttonLabel.value = 'En attente des autres joueurs';
-  timer.state = 'WAITING_OTHER';
-  inspectionPenality.value = "NOTHING";
-  inspectionValue.value = 15;
+const onKeyDownEnter = (event: KeyboardEvent) => {
+  if (event.code === 'Enter'
+    && ( (props.inputMode === 'KEYBOARD' && timer.state === 'CONFIRM')  
+      || (props.inputMode === 'MANUALLY' && props.activeInspection && timer.state === 'CONFIRM')
+      || (props.inputMode === 'MANUALLY' && !props.activeInspection && timer.state === 'BEGIN_STATE')
+      )
+    )  
+      {
+    saveTime();
+  }
+}
 
-  emits('time-sended', timer.timeDisplayed)
+const saveTime = () => {
+
+  if (props.inputMode === 'KEYBOARD') {
+    buttonLabel.value = 'En attente des autres joueurs';
+    timer.state = 'WAITING_OTHER';
+    inspectionPenality.value = "NOTHING";
+    inspectionValue.value = 15;
+    emits('time-sended', timer.timeDisplayed)
+  }
+
+  if (props.inputMode === 'MANUALLY') {
+    const [isOk, timeFormated] = isTimeFormatOk(manualTime.input)
+
+    if (isOk) {
+      timer.state = 'WAITING_OTHER';
+      inspectionPenality.value = "NOTHING";
+      inspectionValue.value = 15;
+      manualTime.input = "";
+      manualTime.disabled = true;
+      emits('time-sended', timeFormated)
+    } else {
+      const toast = useToast();
+      toast.add({
+        title: 'Temps non envoyé',
+        description: `N'entrez que des chiffres ou 'DNF'. Quelques exemples :  012 -> 0.12 ou 41012 -> 4:10.12.`,
+        duration: 5000
+      })
+    }
+  }
 }
 
 /**
- * code to create Inspection with penalities (+2 and DNF).
+ * code to create Inspection with penalities (+2 and DNF) or not if manual.
  */
 const beginInspection = () => {
+
   timer.state = "INSPECTION";
-  emits('player-changeState','INSPECTING');
+  emits('player-changeState', 'INSPECTING');
   timer.timeDisplayed = inspectionValue.value.toString()
-  inspectionId.value = setInterval(() => {
-    if (inspectionValue.value > 0) {
-      inspectionValue.value--;
-      timer.timeDisplayed = inspectionValue.value.toString()
-    } else if (inspectionValue.value <= 0 && inspectionValue.value > -2) {
-      inspectionValue.value--;
 
-      timer.timeDisplayed = "+2";
-      inspectionPenality.value = "15_17";
-    } else {
+  if (props.inputMode === 'KEYBOARD') {
+    inspectionId.value = setInterval(() => {
+      if (inspectionValue.value > 0) {
+        inspectionValue.value--;
+        timer.timeDisplayed = inspectionValue.value.toString()
+      } else if (inspectionValue.value <= 0 && inspectionValue.value > -2) {
+        inspectionValue.value--;
 
-      timer.timeDisplayed = "DNF";
-      inspectionPenality.value = "DO_NOT_SOLVE";
+        timer.timeDisplayed = "+2";
+        inspectionPenality.value = "15_17";
+      } else {
 
-      clearInterval(inspectionId.value);
-    }
+        timer.timeDisplayed = "DNF";
+        inspectionPenality.value = "DO_NOT_SOLVE";
 
-  }, 1000)
+        clearInterval(inspectionId.value);
+      }
+
+    }, 1000)
+  }
+  if (props.inputMode === 'MANUALLY') {
+    timer.timeDisplayed = inspectionValue.value.toString()
+    inspectionId.value = setInterval(() => {
+      if (inspectionValue.value > 0) {
+        inspectionValue.value--
+        timer.timeDisplayed = inspectionValue.value.toString()
+      } else {
+        clearInterval(inspectionId.value)
+        timer.state = 'CONFIRM'
+      }
+    }, 1000)
+  }
+
 }
 
 onUnmounted(() => {
   window.removeEventListener('keyup', keyUpSpaceManager);
   window.removeEventListener('keydown', keyDownSpaceManager);
+  window.removeEventListener('keydown', onKeyDownEnter)
 })
 
 /**
@@ -221,7 +306,7 @@ const timerHoldingBeforeGo = () => {
 
   holdingSpaceId.value = setTimeout(() => {
     timer.color = "text-emerald-400"
-    timer.state = "READY"
+    timer.state = "READY_TO-SOLVE"
   }, props.readyHoldingTime * 1000)
 }
 
@@ -229,13 +314,16 @@ const timerHoldingBeforeGo = () => {
 watch(() => props.localPlayerState, async (newState, oldState) => {
   if (oldState !== newState && newState == 'READY') {
     timer.timeDisplayed = '0.00'
-    timer.state = 'NOT_READY'
+    timer.state = 'BEGIN_STATE'
     penalitySelected.value = 'OK'
     buttonLabel.value = "Confirmer"
+    manualTime.disabled = false
   }
 })
 
-watch(() => penalitySelected.value, (newVal) => {
+
+
+watch(() => penalitySelected.value, async (newVal) => {
 
   //If DNF at Inspection : No button enabled (DNF value is selected).
   if (inspectionPenality.value !== 'DO_NOT_SOLVE') {
