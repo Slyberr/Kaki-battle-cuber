@@ -27,17 +27,18 @@
       <p class="text-2xl">{{ puzzle }}</p>
       <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
 
-      <Timer class="mt-10" :local-player-state="localPlayerState" :ready-holding-time="readyHoldingTime"
+      <Timer class="mt-10" 
+        :local-player-state="localPlayerState" 
+        :ready-holding-time="readyHoldingTime"
         :active-inspection="inspection"
+        :input-mode="inputMode"
         @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
         @time-sended="(time: string) => sendTime(time)" />
+
       <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
-
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
-        <template #content>
-
-        </template>
       </UDropdownMenu>
+      
       <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves" :solve-id="actualSolveId">
       </TabBattle>
       <!-- <Tchatbox :conv="conv"></Tchatbox>
@@ -86,6 +87,7 @@ const socket: Socket = useSocket()
 const roomName = ref<string | string[] | undefined>(route.params.id)
 const roomPlayers = ref<Player[]>([])
 const me = ref<Player>({ id: "null", owner: false, pseudo: "johndoe", state: "READY" })
+const actualSolveId = ref<number>(1)
 
 const allSolves = ref<Solve[]>([])
 const scramble = ref<string>("")
@@ -94,134 +96,16 @@ const puzzle = ref<string>("")
 const localPlayerState = ref<PlayerState>("READY")
 const readyHoldingTime = ref<number>(0.3)
 const inspection = ref<boolean>(false)
+const inputMode = ref<"KEYBOARD" | "MANUALLY">("KEYBOARD")
 const drawer = ref<TwistyPlayer>()
 
-const actualSolveId = ref<number>(1)
+
 const model = defineModel<string>()
 const conv = ref<Message[]>([])
 
 const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player) => player.state === 'READY'))
 const dropDownItems = computed((): DropdownMenuItem[][] => {
-
-  const menuForEveryone: DropdownMenuItem[][] = [
-    [
-      {
-        label: `Presser la barre espace pendant... (${readyHoldingTime.value}s)`,
-        icon: "lucide:timer",
-        children: [
-          {
-            label: "0 seconde (déclencher dès la touche pressée)",
-            onSelect: () => { readyHoldingTime.value = 0 }
-          },
-          {
-            label: "0.3 seconde",
-            onSelect: () => { readyHoldingTime.value = 0.3 }
-          },
-          {
-            label: "0.55 seconde (Stackmat)",
-            onSelect: () => { readyHoldingTime.value = 0.55 }
-          },
-          {
-            label: "1 seconde",
-            onSelect: () => { readyHoldingTime.value = 1 }
-          }
-        ]
-      },
-      {
-        label: `Activer/Désactiver l'inspection (${inspection.value ? "Activée" : "Désactivée"})`,
-        icon: 'lucide:timer-off',
-        onSelect: () => { inspection.value = !inspection.value }
-      }
-    ]
-  ]
-  if (me.value.owner) {
-    menuForEveryone.push([
-      {
-        label: "Changer d'épreuve",
-        icon: "lucide:puzzle",
-
-        children: [
-          [
-            {
-              label: "La session sera réinitialisée."
-            },
-            {
-              label: "2x2",
-              onSelect: () => { socket.emit("update-event", "222", roomName.value); }
-            },
-            {
-              label: "3x3",
-              onSelect: () => { socket.emit("update-event", "333", roomName.value); }
-            },
-            {
-              label: "3x3oh",
-              onSelect: () => { socket.emit("update-event", "333oh", roomName.value); }
-            },
-            {
-              label: "3x3bf",
-              onSelect: () => { socket.emit("update-event", "333bf", roomName.value); }
-            },
-            {
-              label: "4x4",
-              onSelect: () => { socket.emit("update-event", "444", roomName.value); }
-            },
-            {
-              label: "4x4bf",
-              onSelect: () => { socket.emit("update-event", "444bf", roomName.value); }
-            },
-            {
-              label: "5x5",
-              onSelect: () => { socket.emit("update-event", "555", roomName.value); }
-            },
-            {
-              label: "5x5bf",
-              onSelect: () => { socket.emit("update-event", "555bf", roomName.value); }
-            },
-            {
-              label: "6x6",
-              onSelect: () => { socket.emit("update-event", "666", roomName.value); }
-            },
-            {
-              label: "7x7",
-              onSelect: () => { socket.emit("update-event", "777", roomName.value); }
-            },
-            {
-              label: "Pyraminx",
-              onSelect: () => { socket.emit("update-event", "pyram", roomName.value); }
-            },
-            {
-              label: "Skewb",
-              onSelect: () => { socket.emit("update-event", "skewb", roomName.value); }
-            },
-            {
-              label: "Square-1",
-              onSelect: () => { socket.emit("update-event", "sq1", roomName.value); }
-            },
-            {
-              label: "Clock",
-              onSelect: () => { socket.emit("update-event", "clock", roomName.value); }
-            },
-            {
-              label: "Megaminx",
-              onSelect: () => { socket.emit("update-event", "minx", roomName.value); }
-            },
-            {
-              label: "FTO",
-              onSelect: () => { socket.emit("update-event", "fto", roomName.value); }
-            }
-          ]
-        ]
-      },
-      {
-        label: "Réinitialiser la session",
-        icon: "lucide:brush-cleaning",
-        onSelect: () => {
-          socket.emit("clear-session", (roomName.value));
-        }
-      },
-    ])
-  }
-  return menuForEveryone
+  return useGetDropDownMenu(readyHoldingTime,inspection,inputMode,socket,roomName as Ref<string>,me)
 })
 
 definePageMeta({
@@ -294,13 +178,7 @@ onMounted(() => {
           description: "Vous êtes maintenant le modérateur ! De nouvelles options sont disponibles.",
           duration: 5000
         })
-      } else {
-        toast.add({
-          title: "Une erreur est survenue.",
-          description: "Nous n'avons pas réussi à retrouver votre ID après qu'un joueur est parti.",
-          duration: 6000
-        })
-      }
+      } 
     }
 
   })
