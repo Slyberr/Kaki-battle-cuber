@@ -17,13 +17,13 @@ export const saveTime = async (
   rooms: Map<string, Room>,
   io: Server,
   time: string,
-  userId: string,
+  playerId: string,
   solveId: number,
 ) => {
   const room = rooms.get(roomName);
 
   if (room) {
-    const player = room.players.find((player: Player) => player.id === userId);
+    const player = room.players.find((player: Player) => player.id === playerId);
 
     if (player) {
       //it mean  "no one in this solve submit before"
@@ -34,7 +34,7 @@ export const saveTime = async (
       }
 
       //add player time
-      room.currentSolve[userId] = time;
+      room.currentSolve[playerId] = time;
       player.state = "SCORED";
       rooms.set(roomName,room)
       io.to(roomName).emit('players-updated', room.players);

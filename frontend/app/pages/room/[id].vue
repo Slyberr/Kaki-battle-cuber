@@ -27,14 +27,10 @@
       <p class="text-2xl">{{ puzzle }}</p>
       <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
 
-      <Timer class="mt-10" 
-        
-        :local-player-state="localPlayerState"
-        :ready-holding-time="readyHoldingTime" 
-        :active-inspection="inspection" 
-        @player-change-state="(state: PlayerState) => {socket.emit('change-state',roomName,state, me.id)}"
-        @time-sended="(time: string) => sendTime(time)" 
-        />
+      <Timer class="mt-10" :local-player-state="localPlayerState" :ready-holding-time="readyHoldingTime"
+        :active-inspection="inspection"
+        @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
+        @time-sended="(time: string) => sendTime(time)" />
       <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
 
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
@@ -104,7 +100,7 @@ const actualSolveId = ref<number>(1)
 const model = defineModel<string>()
 const conv = ref<Message[]>([])
 
-const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player)=> player.state === 'READY'))
+const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player) => player.state === 'READY'))
 const dropDownItems = computed((): DropdownMenuItem[][] => {
 
   const menuForEveryone: DropdownMenuItem[][] = [
@@ -283,19 +279,30 @@ onMounted(() => {
     roomPlayers.value = players
     const wasOwner = me.value.owner
 
-    me.value = roomPlayers.value.find((player: Player) => player.id === me.value.id)!
     allSolves.value.forEach((solve) => {
       delete solve[userID]
     })
 
-    if (me.value.owner && wasOwner === false) {
-      const toast = useToast()
-      toast.add({
-        title: "Le modérateur de salle est parti.",
-        description: "Vous êtes maintenant le modérateur ! De nouvelles options sont disponibles.",
-        duration: 10000
-      })
+    const newMe = roomPlayers.value.find((player: Player) => player.id === me.value.id)
+    const toast = useToast()
+
+    if (newMe) {
+      me.value = newMe
+      if (me.value.owner && wasOwner === false) {
+        toast.add({
+          title: "Le modérateur de salle est parti.",
+          description: "Vous êtes maintenant le modérateur ! De nouvelles options sont disponibles.",
+          duration: 5000
+        })
+      } else {
+        toast.add({
+          title: "Une erreur est survenue.",
+          description: "Nous n'avons pas réussi à retrouver votre ID après qu'un joueur est parti.",
+          duration: 6000
+        })
+      }
     }
+
   })
 
   //When all players finishs
@@ -318,17 +325,20 @@ onMounted(() => {
 
   //When owner change the event
   socket.on("event-updated", (info: { event: string, scramble: string }) => {
-    const eventInfo = mapEvent.get(info.event)!
+    const eventInfo = mapEvent.get(info.event)
 
-    puzzle.value = eventInfo.toDisplay
-    scramble.value = info.scramble
+    if (eventInfo) {
+      puzzle.value = eventInfo.toDisplay
+      scramble.value = info.scramble
 
-    allSolves.value = []
-    actualSolveId.value = 1
+      allSolves.value = []
+      actualSolveId.value = 1
 
-    //Maj twisty
-    drawer.value!.puzzle = eventInfo.toDrawer as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
-    drawer.value!.alg = scramble.value
+      //Maj twisty
+      drawer.value!.puzzle = eventInfo.toDrawer as "2x2x2" | "3x3x3" | "4x4x4" | "5x5x5" | "6x6x6" | "pyraminx" | "skewb" | "clock" | "fto" | "square1" | "megaminx" | "7x7x7"
+      drawer.value!.alg = scramble.value
+    }
+
   })
 
   socket.on("session-cleaned", () => {
@@ -338,13 +348,13 @@ onMounted(() => {
 })
 
 const sendTime = (time: string) => {
-  socket.emit("save-time", { roomName: roomName.value, time: time, userId: me.value.id, solveId: actualSolveId.value })
+  socket.emit("save-time", { roomName: roomName.value, time: time, solveId: actualSolveId.value })
   localPlayerState.value = "SCORED"
   scramble.value = 'Attente des autres joueurs...'
 }
 
 const leaveRoom = () => {
-  socket.emit("leave-room", me.value, roomName.value)
+  socket.emit("leave-room", roomName.value)
   return navigateTo("/home?return=yes")
 }
 

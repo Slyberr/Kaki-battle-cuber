@@ -25,7 +25,6 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
         mainColumns.push({ accessorKey: player.id , header: player.pseudo + stateForHuman(player.state)  })
     }
     return mainColumns
-
 })
 
 const stateForHuman = (state : PlayerState) => {
@@ -41,10 +40,6 @@ const stateForHuman = (state : PlayerState) => {
             return ' (confirmation...)'
         case 'SCORED' :
             return ' (fini !)' 
-
     }
 }
-
-
-
 </script>
