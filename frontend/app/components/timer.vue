@@ -2,7 +2,7 @@
   <div class="timer w-full flex justify-center min-h-42">
     <div v-if="inputMode === 'KEYBOARD'" class="flex flex-col items-center gap-3 ">
 
-      <div class="text-4xl transition ease-linear duration-75" :class=timer.color>{{ timer.timeDisplayed }}</div>
+      <div class="text-4xl transition ease-linear duration-75 " :class=timer.color>{{ timer.timeDisplayed }}</div>
       <template v-if="timer.state === 'CONFIRM' || timer.state === 'WAITING_OTHER'">
         <URadioGroup v-model:model-value="penalitySelected" :items="radioSolvePenalities"
           :disabled="inspectionPenality === 'DO_NOT_SOLVE' || timer.state === 'WAITING_OTHER'" variant="card"
@@ -14,15 +14,19 @@
     </div>
     <div class="flex flex-col w-[25%]" v-if="inputMode === 'MANUALLY'">
       <template v-if="activeInspection && (timer.state === 'BEGIN_STATE' || timer.state === 'INSPECTION')">
-        <div class="text-4xl transition ease-linear duration-75 text-center" :class=timer.color>{{ timer.timeDisplayed
-          }}</div>
+
+        <div class="text-4xl transition ease-linear duration-75 text-center  " :class=timer.color>{{timer.timeDisplayed}}</div>
+        <template v-if="timer.state === 'INSPECTION'">
+          <p class="text-sm text-center m-4">(Appuyez sur Espace pour terminer l'inspection)</p>
+        </template>
+
       </template>
       <template v-else>
         <UInput v-model:model-value="manualTime.input" placeholder="Only Digit or 'DNF'." class="w-full" color="primary"
           maxlength="6" :disabled="manualTime.disabled">
         </UInput>
         <p>{{ 'Votre temps est : ' + isTimeFormatOk(manualTime.input)[1] }}</p>
-       
+
       </template>
     </div>
   </div>
@@ -143,7 +147,7 @@ const keyUpSpaceManager = (event: KeyboardEvent) => {
             clearInterval(inspectionId.value)
             timer.state = 'CONFIRM';
             emits('player-changeState', 'CONFIRMATION');
-            
+
           }
           break;
       }
@@ -176,7 +180,7 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
             timerHoldingBeforeGo()
             break;
           }
-         
+
 
         //When timer is stopped (keydown).
         case "RUNNING":
@@ -206,12 +210,11 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
 
 const onKeyDownEnter = (event: KeyboardEvent) => {
   if (event.code === 'Enter'
-    && ( (props.inputMode === 'KEYBOARD' && timer.state === 'CONFIRM')  
+    && ((props.inputMode === 'KEYBOARD' && timer.state === 'CONFIRM')
       || (props.inputMode === 'MANUALLY' && props.activeInspection && timer.state === 'CONFIRM')
       || (props.inputMode === 'MANUALLY' && !props.activeInspection && timer.state === 'BEGIN_STATE')
-      )
-    )  
-      {
+    )
+  ) {
     saveTime();
   }
 }
