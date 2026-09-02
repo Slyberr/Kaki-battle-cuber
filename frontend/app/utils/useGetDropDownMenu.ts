@@ -7,6 +7,7 @@ import type { Player } from "~/types/player";
  * @param readyHoldingTime 
  * @param inspection 
  * @param inputMode 
+ * @param audioForInspection
  * @param socket 
  * @param roomName 
  * @param me 
@@ -16,6 +17,7 @@ export const useGetDropDownMenu = (
   readyHoldingTime: Ref<Number>,
   inspection: Ref<boolean>,
   inputMode : Ref<"KEYBOARD" | "MANUALLY">,
+  audioForInspection : Ref<string[]>,
   socket: Socket,
   roomName: Ref<string>,
   me: Ref<Player>,
@@ -77,6 +79,36 @@ export const useGetDropDownMenu = (
           inspection.value = !inspection.value;
         },
       },
+      {
+        label : `Voix pour l'inspection (${audioForInspection.value[0]})`,
+        icon : 'lucide:volume-2',
+        children : [
+          {
+            label : "Rien",
+            onSelect : () => {
+              audioForInspection.value = ['Rien','rien']
+            }
+          },
+          {
+            label : "8/12",
+            onSelect : () => {
+              audioForInspection.value = ['8/12','8-12','8-louis.wav','12-louis.wav']
+            }
+          },
+          {
+            label : "8/12 secondes",
+            onSelect : () => {
+              audioForInspection.value = ['8/12 secondes','8-12-sec','8-sec-louis.wav','12-sec-louis.wav']
+            }
+          },
+          {
+            label : "8/12 secondes Polonais by Le Peuneuj Roux",
+            onSelect : () => {
+              audioForInspection.value = ['8/12 secondes en polonais by le Peuneuj Roux','8-12-sec-pol-peuneuj','8-peuneuj.wav','12-peuneuj.wav']
+            }
+          }
+        ]
+      }
     ],
   ];
   if (me.value.owner) {

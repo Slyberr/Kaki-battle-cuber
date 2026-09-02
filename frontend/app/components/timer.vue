@@ -15,7 +15,8 @@
     <div class="flex flex-col w-[25%]" v-if="inputMode === 'MANUALLY'">
       <template v-if="activeInspection && (timer.state === 'BEGIN_STATE' || timer.state === 'INSPECTION')">
 
-        <div class="text-4xl transition ease-linear duration-75 text-center  " :class=timer.color>{{timer.timeDisplayed}}</div>
+        <div class="text-4xl transition ease-linear duration-75 text-center  " :class=timer.color>
+          {{ timer.timeDisplayed }}</div>
         <template v-if="timer.state === 'INSPECTION'">
           <p class="text-sm text-center m-4">(Appuyez sur Espace pour terminer l'inspection)</p>
         </template>
@@ -37,14 +38,27 @@
 import type { RadioGroupItem } from '@nuxt/ui';
 import type { PlayerState } from '~/types/player';
 
-const props = defineProps<{ localPlayerState: PlayerState, readyHoldingTime: number, activeInspection: boolean, inputMode: "KEYBOARD" | "MANUALLY" }>()
+const props = defineProps<{
+  localPlayerState: PlayerState,
+  readyHoldingTime: number,
+  activeInspection: boolean,
+  inputMode: "KEYBOARD" | "MANUALLY",
+  audios: string[],
+}>()
 
-const timer = reactive<{ timeDisplayed: string, state: "BEGIN_STATE" | "INSPECTION" | "READY_TO-SOLVE" | "RUNNING" | "CONFIRM" | "WAITING_OTHER", realTime: number, color: string }>({
-  timeDisplayed: "0.00",
-  realTime: 0.00,
-  state: "BEGIN_STATE",
-  color: "text-gray-50"
-})
+const timer = reactive<{
+  timeDisplayed: string,
+  state: "BEGIN_STATE" | "INSPECTION" | "READY_TO-SOLVE" | "RUNNING" | "CONFIRM" | "WAITING_OTHER",
+  realTime: number,
+  color: string
+}>
+  ({
+    timeDisplayed: "0.00",
+    realTime: 0.00,
+    state: "BEGIN_STATE",
+    color: "text-gray-50"
+  })
+
 const manualTime = reactive<{ input: string, disabled: boolean }>({
   input: "",
   disabled: false
@@ -260,10 +274,20 @@ const beginInspection = () => {
   timer.timeDisplayed = inspectionValue.value.toString()
 
   if (props.inputMode === 'KEYBOARD') {
-    inspectionId.value = setInterval(() => {
+    inspectionId.value = setInterval(async () => {
       if (inspectionValue.value > 0) {
         inspectionValue.value--;
         timer.timeDisplayed = inspectionValue.value.toString()
+
+        if (inspectionValue.value === 7 && props.audios.length === 4) {
+          await playAudioInspection(props.audios[2]!)
+        }
+
+        if (inspectionValue.value === 3 && props.audios.length === 4) {
+          await playAudioInspection(props.audios[3]!)
+        }
+
+
       } else if (inspectionValue.value <= 0 && inspectionValue.value > -2) {
         inspectionValue.value--;
 
