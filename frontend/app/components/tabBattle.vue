@@ -9,37 +9,52 @@ import type { Player, PlayerState } from '~/types/player';
 import type { Solve } from '~/types/solve';
 
 
-const props = defineProps<{ players: Player[], times: Solve[], solveId: number }>()
+const props = defineProps<{ players: Player[], times: Solve[], solveId: number, me : Player }>()
 
 
 const colonnes = computed<TableColumn<Solve>[]>(() => {
 
-    const mainColumns = [
+    const mainColumns : TableColumn<Solve>[] = [
         {
             accessorKey: 'solveId',
-            header: 'n°'
+            header: 'n°',
+            meta: {
+                class: {
+                    td: 'w-10',
+                }
+            },
+            
         },
 
     ]
     for (let player of props.players) {
-        mainColumns.push({ accessorKey: player.id , header: player.pseudo + stateForHuman(player.state)  })
+        mainColumns.push({
+            accessorKey: player.id, 
+            header:  () => (`${player.pseudo} \n ${stateForHuman(player.state)}`),
+            meta: {
+                class: {
+                    td: 'border-l min-w-37',
+                    th: player.id === props.me.id ? "text-primary whitespace-pre-line" : "text-neutral whitespace-pre-line"
+                },       
+            },
+        })
     }
     return mainColumns
 })
 
-const stateForHuman = (state : PlayerState) => {
+const stateForHuman = (state: PlayerState) => {
 
-    switch  (state){
-        case 'READY' :
+    switch (state) {
+        case 'READY':
             return ' (prêt)'
-        case 'INSPECTING' :
+        case 'INSPECTING':
             return ' (inspection...)'
-        case 'SOLVING' :
+        case 'SOLVING':
             return ' (résolution...)'
-        case 'CONFIRMATION' :
+        case 'CONFIRMATION':
             return ' (confirmation...)'
-        case 'SCORED' :
-            return ' (fini !)' 
+        case 'SCORED':
+            return ' (fini !)'
     }
 }
 </script>
