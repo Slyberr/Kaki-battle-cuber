@@ -32,6 +32,7 @@
         :ready-holding-time="readyHoldingTime"
         :active-inspection="inspection"
         :input-mode="inputMode"
+        :audios="audiosForInspection"
         @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
         @time-sended="(time: string) => sendTime(time)" />
 
@@ -96,6 +97,8 @@ const puzzle = ref<string>("")
 const localPlayerState = ref<PlayerState>("READY")
 const readyHoldingTime = ref<number>(0.3)
 const inspection = ref<boolean>(false)
+const audiosForInspection = ref<string[]>(['Rien','rien']);
+
 const inputMode = ref<"KEYBOARD" | "MANUALLY">("KEYBOARD")
 const drawer = ref<TwistyPlayer>()
 
@@ -105,7 +108,7 @@ const conv = ref<Message[]>([])
 
 const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player) => player.state === 'READY'))
 const dropDownItems = computed((): DropdownMenuItem[][] => {
-  return useGetDropDownMenu(readyHoldingTime,inspection,inputMode,socket,roomName as Ref<string>,me)
+  return useGetDropDownMenu(readyHoldingTime,inspection,inputMode,audiosForInspection,socket,roomName as Ref<string>,me)
 })
 
 definePageMeta({
