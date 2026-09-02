@@ -40,7 +40,11 @@
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
       </UDropdownMenu>
       
-      <TabBattle v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves" :solve-id="actualSolveId">
+      <TabBattle v-if="roomPlayers.length > 0" 
+        :players="roomPlayers" 
+        :times="allSolves" 
+        :solve-id="actualSolveId"
+        :me="me">
       </TabBattle>
       <!-- <Tchatbox :conv="conv"></Tchatbox>
       <div class="flex gap-5">
