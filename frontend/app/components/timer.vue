@@ -172,7 +172,11 @@ const keyUpSpaceManager = (event: KeyboardEvent) => {
 const keyDownSpaceManager = (event: KeyboardEvent) => {
 
   if (event.code === 'Space') {
-    //Prevent the scroll
+
+    //Disabled the timer fonction on input tag
+    if ((event.target as HTMLElement).tagName === 'INPUT') {
+      return
+    }
     event.preventDefault()
     //not refired the key if is too long press
     if (event.repeat) {

@@ -40,3 +40,9 @@ export type Room = {
     | "minx"
     | "sq1";
 };
+
+export type Message = {
+    pseudo : string,
+    data : string | number,
+    date : string
+};

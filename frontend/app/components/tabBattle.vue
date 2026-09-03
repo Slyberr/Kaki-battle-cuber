@@ -1,11 +1,10 @@
 <template>
-    <UTable sticky class="min-w-[70%] h-[min(400px,30dvh)] " :columns="colonnes" :data="props.times"></UTable>
+    <UTable sticky class="max-h-110" :columns="colonnes" :data="props.times"></UTable>
 </template>
 
 
 <script setup lang="ts">
 import type { TableColumn, TableRow } from '@nuxt/ui'
-import { TwistyPlayer } from 'cubing/twisty';
 import type { Player, PlayerState } from '~/types/player';
 import type { Solve } from '~/types/solve';
 

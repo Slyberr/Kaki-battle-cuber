@@ -20,42 +20,39 @@
     </template>
   </UHeader>
 
-  <div class="overflow-y-hidden">
+  <div class="flex flex-col">
+  <div>
     <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
       <h1 class="flex text-center text-3xl">{{ roomName }}</h1>
-      
+
       <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
       <p class="text-2xl">{{ puzzle }}</p>
-      <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
+      <p class="text-center max-w-[max(50%,600px)] h-20 ">{{ scramble }}</p>
 
-      <Timer class="mt-10" 
-        :local-player-state="localPlayerState" 
-        :ready-holding-time="readyHoldingTime"
-        :active-inspection="inspection"
-        :input-mode="inputMode"
-        :audios="audiosForInspection"
+      <Timer class="mt-10 " :local-player-state="localPlayerState" :ready-holding-time="readyHoldingTime"
+        :active-inspection="inspection" :input-mode="inputMode" :audios="audiosForInspection"
         @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
         @time-sended="(time: string) => sendTime(time)" />
 
       <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
       </UDropdownMenu>
-      
-      <TabBattle v-if="roomPlayers.length > 0" 
-        :players="roomPlayers" 
-        :times="allSolves" 
-        :solve-id="actualSolveId"
-        :me="me">
-      </TabBattle>
-      <!-- <Tchatbox :conv="conv"></Tchatbox>
-      <div class="flex gap-5">
-        <UInput type="text" v-model="model"></UInput>
-        <UButton @click="sendMessage">Envoyer</UButton>
-      </div> -->
-
+    
     </div>
+     
   </div>
+ <div class="grid grid-cols-[2fr_1fr] w-full gap-8">
+        <TabBattle class="grow-8" v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves" :solve-id="actualSolveId"
+          :me="me">
+        </TabBattle>
+       <Tchatbox  class="grow min-w-0" :me="me" :socket="socket" :roomname="(roomName as string)"></Tchatbox>
+     </div>
 
+
+</div>
+<div id="footer" class=" flex justify-end items-center  bottom-0 w-full">
+  <div id="twisty-container" class="2xl:scale-100 xl:scale-90 scale-75 flex items-center "></div>
+</div>
 </template>
 
 
@@ -67,6 +64,7 @@ import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
 import { type Player, type PlayerState } from '~/types/player.ts';
 import type { Solve } from '~/types/solve.ts';
+import { strictObject } from 'valibot';
 
 const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
   ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
@@ -95,25 +93,21 @@ const roomPlayers = ref<Player[]>([])
 const me = ref<Player>({ id: "null", owner: false, pseudo: "johndoe", state: "READY" })
 const actualSolveId = ref<number>(1)
 
-const allSolves = ref<Solve[]>([{solveId:0}])
+const allSolves = ref<Solve[]>([{ solveId: 0 }])
 const scramble = ref<string>("")
 const puzzle = ref<string>("")
 
 const localPlayerState = ref<PlayerState>("READY")
 const readyHoldingTime = ref<number>(0.3)
 const inspection = ref<boolean>(false)
-const audiosForInspection = ref<string[]>(['Rien','rien']);
+const audiosForInspection = ref<string[]>(['Rien', 'rien']);
 
 const inputMode = ref<"KEYBOARD" | "MANUALLY">("KEYBOARD")
 const drawer = ref<TwistyPlayer>()
 
-
-const model = defineModel<string>()
-const conv = ref<Message[]>([])
-
 const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player) => player.state === 'READY'))
 const dropDownItems = computed((): DropdownMenuItem[][] => {
-  return useGetDropDownMenu(readyHoldingTime,inspection,inputMode,audiosForInspection,socket,roomName as Ref<string>,me)
+  return useGetDropDownMenu(readyHoldingTime, inspection, inputMode, audiosForInspection, socket, roomName as Ref<string>, me)
 })
 
 definePageMeta({
@@ -127,7 +121,7 @@ definePageMeta({
 })
 
 useHead({
-  title : roomName.value as string
+  title: roomName.value as string
 })
 
 //Instant ask at server
@@ -148,10 +142,9 @@ onMounted(() => {
       drawer.value.visualization = "2D"
       drawer.value.controlPanel = 'none'
       drawer.value.background = 'none'
-      const wrapper = document.createElement('div')
-      wrapper.classList.add('flex', 'justify-end')
+      const wrapper = document.getElementById('twisty-container')!
       wrapper.appendChild(drawer.value)
-      document.body.appendChild(wrapper)
+     
     }
 
     if (roomPlayers.value.length > 0) {
@@ -160,7 +153,7 @@ onMounted(() => {
     }
 
     //Scenario : i'm new player but the room already begin 
-    allSolves.value = info.allSolves.length !== 0 ?  info.allSolves : [{solveId : 0}] 
+    allSolves.value = info.allSolves.length !== 0 ? info.allSolves : [{ solveId: 0 }]
     actualSolveId.value = info.actualSolveId
     puzzle.value = mapEvent.get(info.event)?.toDisplay ?? ""
   })
@@ -190,7 +183,7 @@ onMounted(() => {
           description: "Vous êtes maintenant le modérateur ! De nouvelles options sont disponibles.",
           duration: 5000
         })
-      } 
+      }
     }
 
   })
@@ -222,7 +215,7 @@ onMounted(() => {
       puzzle.value = eventInfo.toDisplay
       scramble.value = info.scramble
 
-      allSolves.value = [{solveId : 0}]
+      allSolves.value = [{ solveId: 0 }]
       actualSolveId.value = 1
 
       //Maj twisty
@@ -233,7 +226,7 @@ onMounted(() => {
   })
 
   socket.on("session-cleaned", () => {
-    allSolves.value = [{solveId : 0}]
+    allSolves.value = [{ solveId: 0 }]
     actualSolveId.value = 1
   })
 })
