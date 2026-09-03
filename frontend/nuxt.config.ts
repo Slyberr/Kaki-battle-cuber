@@ -7,6 +7,16 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   ssr: false,
 
+  app: {
+    head: {
+      title : 'Kaki Battle Cuber',
+      link : [
+        {rel: 'icon', type: 'image/svg+xml', href:'/kbc.svg'}
+      ]
+    },
+     
+  },
+
   runtimeConfig: {
     public: {
       socketUrl: "",

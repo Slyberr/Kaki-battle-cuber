@@ -22,8 +22,9 @@
 
   <div class="overflow-y-hidden">
     <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
-      <h1 class="flex text-center text-3xl">{{ roomName }} room</h1>
-      <p>Vous êtes <i class="text-primary">{{ me.pseudo }} {{ me.owner ? "(modérateur)" : "" }}</i></p>
+      <h1 class="flex text-center text-3xl">{{ roomName }}</h1>
+      
+      <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
       <p class="text-2xl">{{ puzzle }}</p>
       <p class="text-center max-w-[max(50%,600px)] ">{{ scramble }}</p>
 
@@ -94,7 +95,7 @@ const roomPlayers = ref<Player[]>([])
 const me = ref<Player>({ id: "null", owner: false, pseudo: "johndoe", state: "READY" })
 const actualSolveId = ref<number>(1)
 
-const allSolves = ref<Solve[]>([])
+const allSolves = ref<Solve[]>([{solveId:0}])
 const scramble = ref<string>("")
 const puzzle = ref<string>("")
 
@@ -123,6 +124,10 @@ definePageMeta({
       }
     }
   ]
+})
+
+useHead({
+  title : roomName.value as string
 })
 
 //Instant ask at server
@@ -155,7 +160,7 @@ onMounted(() => {
     }
 
     //Scenario : i'm new player but the room already begin 
-    allSolves.value = info.allSolves
+    allSolves.value = info.allSolves.length !== 0 ?  info.allSolves : [{solveId : 0}] 
     actualSolveId.value = info.actualSolveId
     puzzle.value = mapEvent.get(info.event)?.toDisplay ?? ""
   })
@@ -193,8 +198,9 @@ onMounted(() => {
   //When all players finishs
   socket.on("nextSolve", (data: { solveId: number, scramble: string, solveToDisplay: Solve }) => {
     localPlayerState.value = "READY"
-    //I prefer to send the last solve only in order to not surcharge the "nextSolve" data send.
-    if (data.solveId === 1) {
+    //Note 1 : I prefer to send the last solve only in order to not surcharge the "nextSolve" data send.
+    // Note 2 : replace '0' solveID by 1 and after unshift with new scores.
+    if (actualSolveId.value === 1) {
       allSolves.value = [data.solveToDisplay]
     } else {
       allSolves.value.unshift(data.solveToDisplay)
@@ -216,7 +222,7 @@ onMounted(() => {
       puzzle.value = eventInfo.toDisplay
       scramble.value = info.scramble
 
-      allSolves.value = []
+      allSolves.value = [{solveId : 0}]
       actualSolveId.value = 1
 
       //Maj twisty
@@ -227,7 +233,7 @@ onMounted(() => {
   })
 
   socket.on("session-cleaned", () => {
-    allSolves.value = []
+    allSolves.value = [{solveId : 0}]
     actualSolveId.value = 1
   })
 })
