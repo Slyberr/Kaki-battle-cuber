@@ -1,5 +1,5 @@
 export type Message = {
-    id : String,
-    data : String | number,
-    date : number
+    pseudo : string,
+    data : string | number,
+    date : string
 }

@@ -3,35 +3,32 @@ import { Server, ServerOptions } from "socket.io";
 import express from "express";
 import cors, { CorsOptions } from "cors";
 import { randomScrambleForEvent } from "cubing/scramble";
-import { Player, PlayerState, Room } from "./types/types.js";
+import { Message, Player, PlayerState, Room } from "./types/types.js";
 import { leaveRoom } from "./utils/leaveRoom.js";
 import { displayRoomsForHomePage } from "./utils/displayRoomsForHomePage.js";
 import { saveTime } from "./utils/saveTime.js";
 import { isOwner } from "./utils/isOwner.js";
 import { readFileSync } from "fs";
 
-
 const options = {
-  key : readFileSync('key.pem'),
-  cert : readFileSync('cert.pem')
-}
+  key: readFileSync("key.pem"),
+  cert: readFileSync("cert.pem"),
+};
 
-const corsOptions  : CorsOptions = {
+const corsOptions: CorsOptions = {
   origin: "*",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   preflightContinue: false,
-  optionsSuccessStatus: 204
-}
+  optionsSuccessStatus: 204,
+};
 
-
-const httpsServer = createServer(options,(req, res) => {
+const httpsServer = createServer(options, (req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
   res.end("OK");
 });
 
-
 const io: Server = new Server(httpsServer, {
-  cors : corsOptions
+  cors: corsOptions,
 });
 
 const rooms: Map<string, Room> = new Map();
@@ -146,6 +143,22 @@ io.on("connection", (socket) => {
     },
   );
 
+  //Send a message to the room
+  socket.on("send-message", (message: string, roomName: string) => {
+    const date = new Date();
+    const room = rooms.get(roomName);
+    if (room) {
+      const player = room.players.find((player) => player.id === socket.id);
+      if (player) {
+        io.to(roomName).emit("get-message", {
+          pseudo: player.pseudo,
+          data: message,
+          date: `${date.getHours()}:${date.getMinutes() > 9 ?  date.getMinutes() : '0' + date.getMinutes()}.${date.getSeconds() > 9 ? date.getSeconds() : '0' + date.getSeconds() }`,
+        });
+      }
+    }
+  });
+
   //Leave a room (only one room by player)
   socket.on("leave-room", (roomName: string) => {
     leaveRoom(socket, roomName, rooms, io, false);
@@ -168,32 +181,23 @@ io.on("connection", (socket) => {
     }
   });
   //When a player juste change his state (solving, inspecting...)
-  socket.on(
-    "change-state",
-    (roomName: string, state: PlayerState) => {
-        const room = rooms.get(roomName);
+  socket.on("change-state", (roomName: string, state: PlayerState) => {
+    const room = rooms.get(roomName);
 
-        if (room) {
-          const player = room.players.find((player) => player.id === socket.id)
-          if (player) {
-            player.state = state;
-            io.to(roomName).emit("players-updated",room.players);
-            rooms.set(roomName,room);
-          }
-        }
-    },
-
-  
-  );
+    if (room) {
+      const player = room.players.find((player) => player.id === socket.id);
+      if (player) {
+        player.state = state;
+        io.to(roomName).emit("players-updated", room.players);
+        rooms.set(roomName, room);
+      }
+    }
+  });
 
   //When a player just submit his time
   socket.on(
     "save-time",
-    async (info: {
-      roomName: string;
-      time: string;
-      solveId: number;
-    }) => {
+    async (info: { roomName: string; time: string; solveId: number }) => {
       await saveTime(
         info.roomName,
         rooms,
@@ -208,7 +212,7 @@ io.on("connection", (socket) => {
   //when event is updated
   socket.on("update-event", async (event, roomName) => {
     const room = rooms.get(roomName);
-    if (room && isOwner(socket.id,rooms,roomName)) {
+    if (room && isOwner(socket.id, rooms, roomName)) {
       room.event = event;
       room.currentSolve = { solveId: -1 };
       room.allSolves = [];
@@ -219,21 +223,21 @@ io.on("connection", (socket) => {
         event: room.event,
         scramble: room.actualScramble,
       });
-    }else {
-      socket.emit("error","Vous n'avez pas les droits de faire cette action.")
+    } else {
+      socket.emit("error", "Vous n'avez pas les droits de faire cette action.");
     }
   });
 
   //When owner clear session
   socket.on("clear-session", (roomName) => {
     const room = rooms.get(roomName);
-    if (room && isOwner(socket.id,rooms,roomName)) {
+    if (room && isOwner(socket.id, rooms, roomName)) {
       room.currentSolve = { solveId: -1 };
       room.allSolves = [];
       room.actualSolveId = 1;
       io.to(roomName).emit("session-cleaned");
     } else {
-      socket.emit("error","Vous n'avez pas les droits de faire cette action.")
+      socket.emit("error", "Vous n'avez pas les droits de faire cette action.");
     }
   });
 });
