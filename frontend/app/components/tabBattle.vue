@@ -1,10 +1,11 @@
 <template>
-    <UTable sticky class="w-full h-[min(400px,30dvh)]" :columns="colonnes" :data="props.times"></UTable>
+    <UTable sticky class="min-w-[70%] h-[min(400px,30dvh)] " :columns="colonnes" :data="props.times"></UTable>
 </template>
 
 
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import type { TableColumn, TableRow } from '@nuxt/ui'
+import { TwistyPlayer } from 'cubing/twisty';
 import type { Player, PlayerState } from '~/types/player';
 import type { Solve } from '~/types/solve';
 
@@ -20,7 +21,9 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
             header: 'n°',
             meta: {
                 class: {
-                    td: 'w-10',
+                    th: 'text-center border-r',
+                    td: 'border-r border-l w-15 text-center',
+                   
                 }
             },
             
@@ -33,10 +36,13 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
             header:  () => (`${player.pseudo} \n ${stateForHuman(player.state)}`),
             meta: {
                 class: {
-                    td: 'border-l min-w-37',
-                    th: player.id === props.me.id ? "text-primary whitespace-pre-line" : "text-neutral whitespace-pre-line"
-                },       
+                    th: player.id === props.me.id ? "text-primary whitespace-pre-line text-center" : "text-neutral whitespace-pre-line text-center",
+                    td: 'border-l border-r min-w-37 ',
+                  
+                },      
+             
             },
+            cell : ({row}) => {return h('div',{class:`text-center ${isBestSolveTime(row,player.id) ? 'text-primary' : 'text-gray-100'}`},() => row.getValue(player.id))}
         })
     }
     return mainColumns
@@ -56,5 +62,29 @@ const stateForHuman = (state: PlayerState) => {
         case 'SCORED':
             return ' (fini !)'
     }
+}
+
+const isBestSolveTime = (row : TableRow<Solve>,id: string) => {
+    
+    const valueToCompare = row.getValue(id) as string
+    const actualRow = row.getAllCells();
+    if (!valueToCompare || valueToCompare.includes('DNF')) {
+        return false
+    }
+    const noPlusValueToCompare = parseFloat(valueToCompare.replaceAll('+',''))
+
+    let bestTime  : number = 9999999
+
+    for (let i= 1;i<actualRow.length;i++) {
+        const currentCellValue = actualRow[i]?.getValue() as string
+        if (currentCellValue && !currentCellValue.includes('DNF')) {
+            const noPluscurrent = parseFloat(currentCellValue.replaceAll('+',''))
+            
+            if (noPluscurrent < bestTime) {
+                bestTime = noPluscurrent
+            } 
+        }
+    }
+    return noPlusValueToCompare === bestTime ? true : false
 }
 </script>

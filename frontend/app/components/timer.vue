@@ -194,32 +194,32 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
             timerHoldingBeforeGo()
             break;
           }
-
-
-        //When timer is stopped (keydown).
-        case "RUNNING":
-          clearInterval(timerIntervalId.value);
-          //Save the score.
-          timer.realTime = parseFloat(timer.timeDisplayed);
-          if (inspectionPenality.value === "15_17") {
-            timer.realTime += 2;
-            timer.timeDisplayed = (timer.realTime).toFixed(2).concat('+');
-          }
-          if (inspectionPenality.value === 'DO_NOT_SOLVE') {
-            penalitySelected.value = 'DO_NOT_SOLVE';
-            timer.timeDisplayed = '('.concat(timer.realTime.toFixed(2), ')', ' DNF')
-          }
-          timer.state = "CONFIRM"
-          emits('player-changeState', 'CONFIRMATION');
-
-          break;
-
         case "READY_TO-SOLVE":
         case "CONFIRM":
           break;
       }
     }
   }
+
+  //TIMER CAN BE STOPPED BY ANY KEY !
+  if (timer.state === 'RUNNING' && props.inputMode === 'KEYBOARD') {
+
+    clearInterval(timerIntervalId.value);
+    //Save the score.
+    timer.realTime = parseFloat(timer.timeDisplayed);
+    if (inspectionPenality.value === "15_17") {
+      timer.realTime += 2;
+      timer.timeDisplayed = (timer.realTime).toFixed(2).concat('+');
+    }
+    if (inspectionPenality.value === 'DO_NOT_SOLVE') {
+      penalitySelected.value = 'DO_NOT_SOLVE';
+      timer.timeDisplayed = '('.concat(timer.realTime.toFixed(2), ')', ' DNF')
+    }
+    timer.state = "CONFIRM"
+    emits('player-changeState', 'CONFIRMATION');
+
+  }
+
 }
 
 const onKeyDownEnter = (event: KeyboardEvent) => {
