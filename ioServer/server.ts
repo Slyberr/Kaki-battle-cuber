@@ -3,7 +3,7 @@ import { Server, ServerOptions } from "socket.io";
 import express from "express";
 import cors, { CorsOptions } from "cors";
 import { randomScrambleForEvent } from "cubing/scramble";
-import { Message, Player, PlayerState, Room } from "./types/types.js";
+import { Message, Penality, Player, PlayerState, Room } from "./types/types.js";
 import { leaveRoom } from "./utils/leaveRoom.js";
 import { displayRoomsForHomePage } from "./utils/displayRoomsForHomePage.js";
 import { saveTime } from "./utils/saveTime.js";
@@ -197,12 +197,14 @@ io.on("connection", (socket) => {
   //When a player just submit his time
   socket.on(
     "save-time",
-    async (info: { roomName: string; time: string; solveId: number }) => {
+    async (info: { roomName: string; time: number;inspectionPenality: Penality,penalitySelected : Penality, solveId: number }) => {
       await saveTime(
         info.roomName,
         rooms,
         io,
         info.time,
+        info.inspectionPenality,
+        info.penalitySelected,
         socket.id,
         info.solveId,
       );

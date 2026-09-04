@@ -8,8 +8,8 @@ export type Player = {
 };
 
 export type Solve = {
-  solveId : number;
-  [idUser : string] : string | number
+  solveId : number | any;
+  [idUser : string] : {time: number, finalPenality : 'DNF' | '+2' | '+4' | 'OK'} | any;
 }
 
 export type Room = {
@@ -46,3 +46,5 @@ export type Message = {
     data : string | number,
     date : string
 };
+
+export type Penality = 'NONE' | 'PLUS_2' | 'DNF';

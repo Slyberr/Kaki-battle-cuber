@@ -32,7 +32,7 @@
       <Timer class="mt-10 " :local-player-state="localPlayerState" :ready-holding-time="readyHoldingTime"
         :active-inspection="inspection" :input-mode="inputMode" :audios="audiosForInspection"
         @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
-        @time-sended="(time: string) => sendTime(time)" />
+        @time-sended="(time: number,inspectionPenality : string,penalitySelected : string) => sendTime(time,inspectionPenality,penalitySelected)" />
 
       <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"></UButton>
@@ -48,7 +48,6 @@
        <Tchatbox  class="grow min-w-0" :me="me" :socket="socket" :roomname="(roomName as string)"></Tchatbox>
      </div>
 
-
 </div>
 <div id="footer" class=" flex justify-end items-center  bottom-0 w-full">
   <div id="twisty-container" class="2xl:scale-100 xl:scale-90 scale-75 flex items-center "></div>
@@ -59,12 +58,11 @@
 <script setup lang="ts">
 import { Socket } from 'socket.io-client';
 import TabBattle from '../../components/tabBattle.vue'
-import type { Message } from '../../types/chat.js'
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
 import { type Player, type PlayerState } from '~/types/player.ts';
 import type { Solve } from '~/types/solve.ts';
-import { strictObject } from 'valibot';
+import { string } from 'valibot';
 
 const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
   ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
@@ -231,8 +229,8 @@ onMounted(() => {
   })
 })
 
-const sendTime = (time: string) => {
-  socket.emit("save-time", { roomName: roomName.value, time: time, solveId: actualSolveId.value })
+const sendTime = (time: number,inspectionPenality: string, penalitySelected: string) => {
+  socket.emit("save-time", { roomName: roomName.value, time: time, inspectionPenality:inspectionPenality,penalitySelected: penalitySelected, solveId: actualSolveId.value })
   localPlayerState.value = "SCORED"
   scramble.value = 'Attente des autres joueurs...'
 }

@@ -1,5 +1,5 @@
 import { randomScrambleForEvent } from "cubing/scramble";
-import { Player, Room } from "../types/types.js";
+import { Penality, Player, Room } from "../types/types.js";
 import { Server } from "socket.io";
 import { everyoneScored } from "./everyoneScored.js";
 
@@ -9,6 +9,8 @@ import { everyoneScored } from "./everyoneScored.js";
  * @param rooms
  * @param io
  * @param time
+ * @param inspectionPenality
+ * @param penalitySelected
  * @param playerId
  * @param solveId
  */
@@ -16,7 +18,9 @@ export const saveTime = async (
   roomName: string,
   rooms: Map<string, Room>,
   io: Server,
-  time: string,
+  time: number,
+  inspectionPenality: Penality,
+  penalitySelected: Penality,
   playerId: string,
   solveId: number,
 ) => {
@@ -33,14 +37,25 @@ export const saveTime = async (
         };
       }
 
-      //add player time
-      room.currentSolve[playerId] = time;
-      player.state = "SCORED";
-      rooms.set(roomName,room)
+      if (inspectionPenality === 'DNF' || penalitySelected === 'DNF' ) {
+        room.currentSolve[playerId] = {time : time,finalPenality : 'DNF'};
+        
+      } else if (inspectionPenality === 'PLUS_2' && penalitySelected === 'PLUS_2') {
+        room.currentSolve[playerId] = {time : time,finalPenality : '+4'};
+        
+      } else if (inspectionPenality === 'PLUS_2' || penalitySelected === 'PLUS_2') {
+        room.currentSolve[playerId] = {time : time,finalPenality : '+2'};
+      
+      } else {
+        room.currentSolve[playerId] = {time : time,finalPenality : 'OK'};
+      }
+
+      player.state = 'SCORED';
+      rooms.set(roomName,room);
       io.to(roomName).emit('players-updated', room.players);
 
       //If everyone in this room submit his time
-      if (room.players.every((player) => player.state === "SCORED")) {
+      if (room.players.every((player) => player.state === 'SCORED')) {
         everyoneScored(rooms,roomName,io);
       } 
     }
