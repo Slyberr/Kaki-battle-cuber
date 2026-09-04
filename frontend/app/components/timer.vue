@@ -312,6 +312,16 @@ const saveTime = () => {
 
   if (props.inputMode === 'MANUALLY') {
     const [isOk, timeFormated] = isTimeFormatOk(manualTime.input);
+    let [min,sec,ms] : string = '';
+    let array  : string[] =  manualTime.input.split(':');
+    //If time is > 1 min
+    if (array.length > 1) {
+      let secondItem = array[1];
+
+    } else {
+      min = array[0];
+      sec = array[1]
+    }
 
     if (isOk) {
       timer.state = 'WAITING_OTHER';
