@@ -1,6 +1,6 @@
 
 /**
- * This function can translate a timestamp to a MM:SS:mm Format.
+ * This function can translate a timestamp in ms to a MM:SS:cS Format.
  * @param initialTime the (initial) time to translate
  * @returns 
  */

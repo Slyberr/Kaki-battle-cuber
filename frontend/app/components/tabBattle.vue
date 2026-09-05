@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts">
-import type { TableColumn, TableRow} from '@nuxt/ui'
+import type { TableColumn, TableRow } from '@nuxt/ui'
 import type { Player, PlayerState } from '~/types/player';
 import type { Solve } from '~/types/solve';
 
@@ -32,7 +32,7 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
     for (let player of props.players) {
         mainColumns.push({
             accessorKey: player.id,
-            header: () => (`${player.pseudo} \n ${stateForHuman(player.state)} \n mean: `),
+            header: () => (`${player.pseudo} \n ${stateForHuman(player.state)} \n mean: ${mean(player.id)} `),
             meta: {
                 class: {
                     th: player.id === props.me.id ? "text-primary whitespace-pre-line text-center" : "text-neutral whitespace-pre-line text-center",
@@ -42,12 +42,13 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
 
             },
             cell: ({ row }) => {
-                return h('div',{class:`text-center ${isBestSolveTime(row,player.id) ? 'text-primary' : 'text-gray-100'}`}, () => {
+                
+                return h('div', { class: `text-center ${isBestSolveTime(row, player.id) ? 'text-primary' : 'text-gray-100'}` }, () => {
                     if (row.getValue(player.id) !== undefined) {
-                        const obj  = row.getValue(player.id) as { time: number, finalPenality: 'DNF' | '+2' | '+4' | 'OK' }
+                        const obj = row.getValue(player.id) as { time: number, finalPenality: 'DNF' | '+2' | '+4' | 'OK' }
                         const timeForHuman = useTimeForHuman(obj.time);
-                        if(obj.finalPenality === 'DNF') {
-                            return `DNF(${timeForHuman})` 
+                        if (obj.finalPenality === 'DNF') {
+                            return `DNF(${timeForHuman})`
                         } else if (obj.finalPenality === '+2') {
                             return `${timeForHuman}+`
                         } else if (obj.finalPenality === '+4') {
@@ -82,41 +83,47 @@ const stateForHuman = (state: PlayerState) => {
     }
 }
 
-const isBestSolveTime = (row : TableRow<Solve>,id: string) => {
-
-    const valueToCompare  = row.getValue(id) as {time :number, finalPenality: 'DNF' | '+2' | '+4' | 'OK'};
-    const actualRow = row.getAllCells() ;
-    if (!valueToCompare || valueToCompare.finalPenality === 'DNF') {
-        return false
-    }
-
-    let bestTime  : number = 9999999
-
-    for (let i= 1;i<actualRow.length;i++) {
-        const currentCellValue = actualRow[i]?.getValue() as {time :number, finalPenality: 'DNF' | '+2' | '+4' | 'OK'};
-        if (currentCellValue && currentCellValue.finalPenality !== 'DNF') {
-            
-            if (currentCellValue.time < bestTime) {
-                bestTime = currentCellValue.time
-            } 
+const isBestSolveTime = (row: TableRow<Solve>, id: string) => {
+    //Lazy rendering
+    if (props.me.state === 'READY') {
+        const valueToCompare = row.getValue(id) as { time: number, finalPenality: 'DNF' | '+2' | '+4' | 'OK' };
+        const actualRow = row.getAllCells();
+        if (!valueToCompare || valueToCompare.finalPenality === 'DNF') {
+            return false
         }
+
+        let bestTime: number = 9999999
+
+        for (let i = 1; i < actualRow.length; i++) {
+            const currentCellValue = actualRow[i]?.getValue() as { time: number, finalPenality: 'DNF' | '+2' | '+4' | 'OK' };
+            if (currentCellValue && currentCellValue.finalPenality !== 'DNF') {
+
+                if (currentCellValue.time < bestTime) {
+                    bestTime = currentCellValue.time
+                }
+            }
+        }
+        return valueToCompare.time === bestTime ? true : false
     }
-    return valueToCompare.time === bestTime ? true : false
 }
+
 
 
 const mean = (playerid: string) => {
 
-    let timeCumul = 0
-    let countWithNoDNF = 0
-
-    for (let i = 0; i < props.times.length; i++) {
-        const playerSolve: string = props.times[i]![playerid]
-        if (playerSolve && !playerSolve.includes('DNF')) {
-            countWithNoDNF++;
-            timeCumul += (parseFloat(playerSolve.replaceAll('+', '')));
+    //Lazy rendering
+    if (props.me.state === 'READY') {
+        let timeCumul = 0
+        let countWithNoDNF = 0
+        for (let i = 0; i < props.times.length; i++) {
+            const playerSolve: { time: number, finalPenality: 'DNF' | '+2' | '+4' | 'OK' } | undefined = props.times[i]![playerid]
+            if (playerSolve && playerSolve.time && playerSolve.finalPenality !== 'DNF') {
+                countWithNoDNF++;
+                timeCumul += playerSolve.time;
+            }
         }
+        return timeCumul === 0 ? 'DNF' : useTimeForHuman((timeCumul / countWithNoDNF));
     }
-    return timeCumul === 0 ? 'DNF' : (timeCumul / countWithNoDNF).toFixed(2)
+
 }
 </script>

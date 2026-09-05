@@ -307,33 +307,36 @@ const saveTime = () => {
     //save timestamp -> treatement for human in cells.
     emits('time-sended', timer.realTime, inspectionPenality.value, penalitySelected.value);
     inspectionPenality.value = 'NONE';
-
   }
 
   if (props.inputMode === 'MANUALLY') {
     const [isOk, timeFormated] = isTimeFormatOk(manualTime.input);
-   
 
     if (isOk) {
-      let min = 0;
-      let time = 0;
-
-      //max length for sec example :  15.20 = 5
-      let isMinTime: boolean = timeFormated.length > 5;
-      if (isMinTime) {
-        const arrayOfTime = timeFormated.split(':');
-        min = parseFloat(arrayOfTime[0]!) * 60000;
-        time = min + parseFloat(arrayOfTime[1]!) * 1000;
+      if (timeFormated === 'DNF') {
+        emits('time-sended', 0, 'NONE', 'DNF');
       } else {
-        time = parseFloat(timeFormated) * 1000;
+        let min = 0;
+        let time = 0;
+
+        //max length for sec example :  15.20 = 5
+        let isMinTime: boolean = timeFormated.length > 5;
+        if (isMinTime) {
+          const arrayOfTime = timeFormated.split(':');
+          min = parseFloat(arrayOfTime[0]!) * 60000;
+          time = min + parseFloat(arrayOfTime[1]!) * 1000;
+        } else {
+          time = parseFloat(timeFormated) * 1000;
+        }
+
+        timer.state = 'WAITING_OTHER';
+        inspectionPenality.value = 'NONE';
+        inspectionValue.value = 15;
+        manualTime.input = '';
+        manualTime.disabled = true;
+        emits('time-sended', time, 'NONE', 'NONE');
       }
 
-      timer.state = 'WAITING_OTHER';
-      inspectionPenality.value = 'NONE';
-      inspectionValue.value = 15;
-      manualTime.input = '';
-      manualTime.disabled = true;
-      emits('time-sended', time);
     } else {
       const toast = useToast();
       toast.add({
