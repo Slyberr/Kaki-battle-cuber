@@ -5,8 +5,8 @@
       <div class='text-4xl transition ease-linear' :class=timer.color>{{ timer.timeDisplayed }}</div>
       <template v-if="timer.state === 'CONFIRM' || timer.state === 'WAITING_OTHER'">
         <URadioGroup v-model:model-value='penalitySelected' :items='radioSolvePenalities'
-          :disabled="inspectionPenality === 'DNF' || timer.state === 'WAITING_OTHER'" variant='card'
-          indicator='hidden' orientation='horizontal' :ui="{ container: 'max-h-2' }">
+          :disabled="inspectionPenality === 'DNF' || timer.state === 'WAITING_OTHER'" variant='card' indicator='hidden'
+          orientation='horizontal' :ui="{ container: 'max-h-2' }">
         </URadioGroup>
         <UButton class='my-2' :loading="timer.state === 'WAITING_OTHER'" :label='buttonLabel' @click='saveTime'>
         </UButton>
@@ -49,14 +49,14 @@ const props = defineProps<{
 
 const timer = reactive<{
   realTime: number,
-  timeFormated : string,
+  timeFormated: string,
   timeDisplayed: string,
   state: 'BEGIN_STATE' | 'INSPECTION' | 'READY_TO-SOLVE' | 'RUNNING' | 'CONFIRM' | 'WAITING_OTHER',
   color: string
 }>
   ({
     timeDisplayed: '0.00',
-    timeFormated : '0.00',
+    timeFormated: '0.00',
     realTime: 0.00,
     state: 'BEGIN_STATE',
     color: 'text-gray-50'
@@ -219,7 +219,7 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
     if (inspectionPenality.value === 'PLUS_2') {
       //ms
       timer.realTime += 2000;
-      timer.timeFormated = (parseFloat(timer.timeFormated)+2).toFixed(2);
+      timer.timeFormated = (parseFloat(timer.timeFormated) + 2).toFixed(2);
       timer.timeDisplayed = timer.timeFormated.concat('+');
     }
     if (inspectionPenality.value === 'DNF') {
@@ -298,38 +298,42 @@ const saveTime = () => {
   if (props.inputMode === 'KEYBOARD') {
     buttonLabel.value = 'En attente des autres joueurs';
     timer.state = 'WAITING_OTHER';
-    
+
     inspectionValue.value = 15;
     if (penalitySelected.value === 'PLUS_2') {
       timer.realTime += 2000;
     }
-    
+
     //save timestamp -> treatement for human in cells.
-    emits('time-sended', timer.realTime,inspectionPenality.value,penalitySelected.value);
+    emits('time-sended', timer.realTime, inspectionPenality.value, penalitySelected.value);
     inspectionPenality.value = 'NONE';
 
   }
 
   if (props.inputMode === 'MANUALLY') {
     const [isOk, timeFormated] = isTimeFormatOk(manualTime.input);
-    let [min,sec,ms] : string = '';
-    let array  : string[] =  manualTime.input.split(':');
-    //If time is > 1 min
-    if (array.length > 1) {
-      let secondItem = array[1];
-
-    } else {
-      min = array[0];
-      sec = array[1]
-    }
+   
 
     if (isOk) {
+      let min = 0;
+      let time = 0;
+
+      //max length for sec example :  15.20 = 5
+      let isMinTime: boolean = timeFormated.length > 5;
+      if (isMinTime) {
+        const arrayOfTime = timeFormated.split(':');
+        min = parseFloat(arrayOfTime[0]!) * 60000;
+        time = min + parseFloat(arrayOfTime[1]!) * 1000;
+      } else {
+        time = parseFloat(timeFormated) * 1000;
+      }
+
       timer.state = 'WAITING_OTHER';
       inspectionPenality.value = 'NONE';
       inspectionValue.value = 15;
       manualTime.input = '';
       manualTime.disabled = true;
-      emits('time-sended', timeFormated);
+      emits('time-sended', time);
     } else {
       const toast = useToast();
       toast.add({
@@ -367,18 +371,18 @@ watch(() => penalitySelected.value, async (newVal) => {
   //If DNF at Inspection : No button enabled (DNF value is selected).
   if (inspectionPenality.value !== 'DNF') {
     if (newVal === 'PLUS_2' && timer.state === 'CONFIRM') {
-      timer.timeDisplayed = inspectionPenality.value === 'PLUS_2' 
-      ? (parseFloat(timer.timeFormated)+2).toFixed(2).concat('++') 
-      : (parseFloat(timer.timeFormated)+2).toFixed(2).concat('+')
+      timer.timeDisplayed = inspectionPenality.value === 'PLUS_2'
+        ? (parseFloat(timer.timeFormated) + 2).toFixed(2).concat('++')
+        : (parseFloat(timer.timeFormated) + 2).toFixed(2).concat('+')
     }
     if (newVal === 'DNF' && timer.state === 'CONFIRM') {
       timer.timeDisplayed = '('.concat(timer.timeFormated, ')', ' DNF');
     }
 
     if (newVal === 'NONE' && timer.state === 'CONFIRM') {
-      timer.timeDisplayed = inspectionPenality.value === 'PLUS_2' 
-      ? timer.timeFormated.concat('+') 
-      : timer.timeFormated;
+      timer.timeDisplayed = inspectionPenality.value === 'PLUS_2'
+        ? timer.timeFormated.concat('+')
+        : timer.timeFormated;
     }
   }
 
