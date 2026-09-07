@@ -49,7 +49,7 @@
      </div>
 
 </div>
-<div id="footer" class=" flex justify-end items-center  bottom-0 w-full">
+<div id="footer" class=" flex justify-end items-center bottom-0 w-full">
   <div id="twisty-container" class="2xl:scale-100 xl:scale-90 scale-75 flex items-center "></div>
 </div>
 </template>
@@ -158,7 +158,11 @@ onMounted(() => {
 
   //new player just come / someone change his state
   socket.on("players-updated", (players: Player[]) => {
-    roomPlayers.value = players
+    if(players) {
+      roomPlayers.value = players;
+      me.value = players.find((player) => player.id === me.value.id)!
+    }
+  
   })
 
   //When a player disconnect
