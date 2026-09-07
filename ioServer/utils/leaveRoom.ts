@@ -37,7 +37,8 @@ export const leaveRoom = (
 
     room.players = roomWithoutleaver;
 
-    //performance + when user leave room but not disconnect, ID is same so times come back. Actually, i don't want this.
+    //performance + when user leave room but not disconnect.
+    // socketID is same : maybe next feature, score will stay if come back. Actually, i don't want this.
     room.allSolves.forEach((time) => {
       delete time[mySocket.id];
     });

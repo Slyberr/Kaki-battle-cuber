@@ -225,6 +225,7 @@ io.on('connection', (socket) => {
         event: room.event,
         scramble: room.actualScramble,
       });
+      io.emit('get-rooms',displayRoomsForHomePage(rooms));
     } else {
       socket.emit('error', "Vous n'avez pas les droits de faire cette action.");
     }
@@ -238,6 +239,28 @@ io.on('connection', (socket) => {
       room.allSolves = [];
       room.actualSolveId = 1;
       io.to(roomName).emit('session-cleaned');
+    } else {
+      socket.emit('error', "Vous n'avez pas les droits de faire cette action.");
+    }
+  });
+
+
+   //When owner ckick someone
+  socket.on('kick-player', (roomName: string, playerToKickId: string) => {
+    const room = rooms.get(roomName);
+    if (room && isOwner(socket.id, rooms, roomName)) {
+      const kickPlayer = io.sockets.sockets.get(playerToKickId);
+      //On va pas se kick soi-même quand même.
+      if(kickPlayer && kickPlayer.id !== socket.id) {
+        kickPlayer.leave(roomName);
+        leaveRoom(kickPlayer,roomName,rooms,io,false);
+        kickPlayer.emit('removed','Il a été décidé par le modérateur de vous exclure de la room ' + roomName + ".")
+        
+        io.emit('get-rooms', displayRoomsForHomePage(rooms));
+      } else {
+        socket.emit('error',"Le joueur n'est pas présent dans cette room.")
+      }
+      console.log(kickPlayer)
     } else {
       socket.emit('error', "Vous n'avez pas les droits de faire cette action.");
     }

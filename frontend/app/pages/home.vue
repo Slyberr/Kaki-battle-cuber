@@ -46,7 +46,7 @@
             <UModal class="px-3">
               <div class="grid grid-cols-[3fr_3fr_1fr] w-full py-5">
                 <div class="flex items-center gap-4">
-                  <p class="self-center">{{ room.roomName }}</p>
+                  <p class="self-center">{{ room.roomName }} ({{ mapEvent.get(room.currentEvent)?.toDisplay }}) </p>
                   <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'"/>
                 </div>
 
@@ -79,8 +79,9 @@
 
 <script setup lang="ts">
 import * as v from 'valibot';
+import { mapEvent, type EventID } from '~/types/solve';
 
-const rooms = useState<{ roomName: string, isPrivate: boolean, length: number }[]>('rooms');
+const rooms = useState<{ roomName: string, isPrivate: boolean,currentEvent : EventID; length: number }[]>('rooms');
 
 const state = reactive<{ roomname: string, isPrivate: false, password: string, pseudo: string }>({
   roomname: '',
@@ -113,7 +114,7 @@ definePageMeta({
         redirectToast.add({
           title: 'Redirection',
           description: "Vous avez tenté de joindre la salle via une URL. \n Veuillez utiliser le bouton 'Rejoindre une room.'",
-          duration: 10000
+          duration: 6000
         })
       }
     }

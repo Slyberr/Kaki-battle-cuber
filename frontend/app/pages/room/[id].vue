@@ -69,27 +69,7 @@ import TabBattle from '../../components/tabBattle.vue'
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
 import { type Player, type PlayerState } from '~/types/player.ts';
-import type { Solve } from '~/types/solve.ts';
-import { string } from 'valibot';
-
-const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
-  ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
-  ['333', { toDisplay: '3x3', toDrawer: '3x3x3' }],
-  ['333oh', { toDisplay: '3x3 à une main', toDrawer: '3x3x3' }],
-  ['333bf', { toDisplay: "3x3 à l'aveugle", toDrawer: '3x3x3' }],
-  ['444', { toDisplay: '4x4', toDrawer: '4x4x4' }],
-  ['444bf', { toDisplay: "4x4 à l'aveugle", toDrawer: '4x4x4' }],
-  ['555', { toDisplay: '5x5', toDrawer: '5x5x5' }],
-  ['555bf', { toDisplay: "5x5 à l'aveugle", toDrawer: "5x5x5" }],
-  ['666', { toDisplay: '6x6', toDrawer: '6x6x6' }],
-  ['777', { toDisplay: '7x7', toDrawer: '7x7x7' }],
-  ['pyram', { toDisplay: 'Pyraminx', toDrawer: 'pyraminx' }],
-  ['skewb', { toDisplay: 'Skewb', toDrawer: 'skewb' }],
-  ['clock', { toDisplay: 'Clock', toDrawer: 'clock' }],
-  ['fto', { toDisplay: 'FTO', toDrawer: 'fto' }],
-  ['sq1', { toDisplay: 'Square-1', toDrawer: 'square1' }],
-  ['minx', { toDisplay: 'Megaminx', toDrawer: 'megaminx' }]
-]);
+import { mapEvent, type EventToDrawer, type Solve } from '~/types/solve.ts';
 
 const route = useRoute();
 const socket: Socket = useSocket();
@@ -113,7 +93,16 @@ const drawer = ref<TwistyPlayer>();
 
 const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player) => player.state === 'READY'));
 const dropDownItems = computed((): DropdownMenuItem[][] => {
-  return useGetDropDownMenu(readyHoldingTime, inspection, inputMode, audiosForInspection, socket, roomName as Ref<string>, me)
+  return useGetDropDownMenu(
+    readyHoldingTime,
+    inspection,
+    inputMode,
+    audiosForInspection,
+    socket,
+    roomName as Ref<string>,
+    me,
+    roomPlayers
+  );
 });
 
 definePageMeta({
@@ -144,7 +133,7 @@ onMounted(() => {
     if (document.querySelector('twisty-player') === null) {
       drawer.value = new TwistyPlayer();
 
-      drawer.value.puzzle = (mapEvent.get(info.event)!.toDrawer) as '2x2x2' | '3x3x3' | '4x4x4' | '5x5x5' | '6x6x6' | 'pyraminx' | 'skewb' | 'clock' | 'fto' | 'square1' | 'megaminx' | '7x7x7';
+      drawer.value.puzzle = (mapEvent.get(info.event)!.toDrawer) as EventToDrawer;
       drawer.value.alg = scramble.value;
       drawer.value.visualization = '2D';
       drawer.value.controlPanel = 'none';
@@ -226,7 +215,7 @@ onMounted(() => {
       actualSolveId.value = 1;
 
       //Maj twisty
-      drawer.value!.puzzle = eventInfo.toDrawer as '2x2x2' | '3x3x3' | '4x4x4' | '5x5x5' | '6x6x6' | 'pyraminx' | 'skewb' | 'clock' | 'fto' | 'square1' | 'megaminx' | '7x7x7';
+      drawer.value!.puzzle = eventInfo.toDrawer as EventToDrawer;
       drawer.value!.alg = scramble.value;
     }
 
@@ -236,6 +225,8 @@ onMounted(() => {
     allSolves.value = [{ solveId: 0 }];
     actualSolveId.value = 1;
   });
+
+
 });
 
 const sendTime = (time: number,inspectionPenality: string, penalitySelected: string) => {
