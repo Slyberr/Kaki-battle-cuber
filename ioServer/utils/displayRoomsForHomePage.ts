@@ -1,4 +1,4 @@
-import { Room } from "../types/types.js";
+import { Room } from '../types/types.js';
 
 export const displayRoomsForHomePage = (rooms : Map<string,Room>) => {
   let res: { roomName: string;isPrivate : boolean; length: number }[] = [];

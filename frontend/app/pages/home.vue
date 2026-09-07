@@ -113,7 +113,7 @@ definePageMeta({
         redirectToast.add({
           title: 'Redirection',
           description: "Vous avez tenté de joindre la salle via une URL. \n Veuillez utiliser le bouton 'Rejoindre une room.'",
-          duration: 10000
+          duration: 6000
         })
       }
     }

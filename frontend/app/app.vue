@@ -23,6 +23,15 @@ onMounted(() => {
       });
     });
 
+    socket?.on('removed', (data) => {
+      errorToast.add({
+        title: 'Vous avez été exclu de la room.',
+        description: data,
+
+      });
+      return navigateTo("/home?return=yes");;
+    });
+
     socket?.on('get-rooms', (therooms) => {
       rooms.value = therooms;
     });

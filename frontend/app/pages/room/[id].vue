@@ -70,7 +70,6 @@ import type { DropdownMenuItem } from '@nuxt/ui';
 import { TwistyPlayer } from 'cubing/twisty';
 import { type Player, type PlayerState } from '~/types/player.ts';
 import type { Solve } from '~/types/solve.ts';
-import { string } from 'valibot';
 
 const mapEvent = new Map<string, { toDisplay: string, toDrawer: string }>([
   ['222', { toDisplay: '2x2', toDrawer: '2x2x2' }],
@@ -113,7 +112,16 @@ const drawer = ref<TwistyPlayer>();
 
 const dropDownMenuEnabled = computed(() => roomPlayers.value.every((player) => player.state === 'READY'));
 const dropDownItems = computed((): DropdownMenuItem[][] => {
-  return useGetDropDownMenu(readyHoldingTime, inspection, inputMode, audiosForInspection, socket, roomName as Ref<string>, me)
+  return useGetDropDownMenu(
+    readyHoldingTime,
+    inspection,
+    inputMode,
+    audiosForInspection,
+    socket,
+    roomName as Ref<string>,
+    me,
+    roomPlayers
+  );
 });
 
 definePageMeta({
@@ -236,6 +244,8 @@ onMounted(() => {
     allSolves.value = [{ solveId: 0 }];
     actualSolveId.value = 1;
   });
+
+
 });
 
 const sendTime = (time: number,inspectionPenality: string, penalitySelected: string) => {

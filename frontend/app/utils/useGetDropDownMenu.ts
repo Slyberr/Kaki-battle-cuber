@@ -11,6 +11,7 @@ import type { Player } from "~/types/player";
  * @param socket 
  * @param roomName 
  * @param me 
+ * @param roomPlayers
  * @returns 
  */
 export const useGetDropDownMenu = (
@@ -21,7 +22,24 @@ export const useGetDropDownMenu = (
   socket: Socket,
   roomName: Ref<string>,
   me: Ref<Player>,
+  roomPlayers: Ref<Player[]>
 ): DropdownMenuItem[][] => {
+
+
+  const playersToexpulseMenu = [];
+  for (let i = 0;i<roomPlayers.value.length;i++) {
+    if (roomPlayers.value[i]?.id !== me.value.id){
+      playersToexpulseMenu.push(
+        {
+          label : roomPlayers.value[i]?.pseudo,
+          onSelect : () => {
+            socket.emit('kick-player',roomName.value,roomPlayers.value[i]?.id);
+          }
+        }
+      )
+    }
+  }
+
   const menuForEveryone: DropdownMenuItem[][] = [
     [
       {
@@ -227,6 +245,12 @@ export const useGetDropDownMenu = (
         onSelect: () => {
           socket.emit('clear-session', roomName.value);
         },
+      },
+      {
+        label: 'Exclure',
+        disabled : playersToexpulseMenu.length === 0 ? true : false,
+        icon: 'lucide:user-x',
+        children : playersToexpulseMenu
       },
     ]);
   }
