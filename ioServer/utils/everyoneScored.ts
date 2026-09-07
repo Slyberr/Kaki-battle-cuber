@@ -1,6 +1,6 @@
-import { Server } from "socket.io";
-import { Room } from "../types/types.js";
-import { randomScrambleForEvent } from "cubing/scramble";
+import { Server } from 'socket.io';
+import { Room } from '../types/types.js';
+import { randomScrambleForEvent } from 'cubing/scramble';
 
 /**
  * Buisness logic when everyone in the room scored. 
@@ -16,7 +16,7 @@ export const everyoneScored = async (
   const room = rooms.get(roomName);
   if (room) {
     const newScramble = (
-      await randomScrambleForEvent(room?.event ?? "333")
+      await randomScrambleForEvent(room?.event ?? '333')
     ).toString();
 
     //Each new row is the first row.
@@ -24,9 +24,9 @@ export const everyoneScored = async (
 
     room.actualScramble = newScramble;
     room.actualSolveId++;
-    room.players.map((player) => (player.state = "READY"));
+    room.players.map((player) => (player.state = 'READY'));
     io.to(roomName).emit('players-updated', room.players);
-    io.to(roomName).emit("nextSolve", {
+    io.to(roomName).emit('nextSolve', {
       solveToDisplay: room.currentSolve,
       scramble: newScramble,
       solveId: room.actualSolveId,

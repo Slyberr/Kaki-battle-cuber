@@ -1,11 +1,11 @@
 <template>
-   <div class="flex flex-col border-secondary ">
+   <div class="flex flex-col border-secondary">
       <p class="text-primary p-2">Tchat de <i>{{ props.roomname }}</i></p>
 
 
 
 
-      <div class="tchat-container text-gray-400  bg-gray-950 min-h-0 h-80  mr-4 flex flex-col overflow-y-scroll  border rounded-t-2xl  ">
+      <div class="tchat-container text-gray-400 bg-gray-950 min-h-0 h-80  mr-4 flex flex-col overflow-y-scroll  border rounded-t-2xl">
 
          <div id="area-of-chat">
             <div class="flex flex-col mb-2 text-sm pt-2 pl-2" v-for="msg in conv">
@@ -38,20 +38,14 @@
 
          </p>
 
-
-
       </div>
       <UForm class="flex mt-4 gap-4 w-full" @submit='sendMessage()''>
-         <UFormField class="w-full ">
-         <UInput class="flex grow-2" v-model="inputModel"></UInput>
+         <UFormField class="w-full">
+         <UInput class="flex grow-2" v-model="inputModel" />
          </UFormField>
-         <UButton class="flex grow" type="submit">Envoyer</UButton>
+         <UButton class="flex grow" type="submit" label="Envoyer" />
        </UForm>
-  
    </div>
-  
-   
-   
 </template>
 
 
@@ -60,26 +54,26 @@ import { Socket } from 'socket.io-client';
 import type { Message } from '~/types/chat';
 import type { Player } from '~/types/player';
 
-const props = defineProps<{ me: Player, socket: Socket, roomname: string }>()
-const conv = ref<Message[]>([])
-const inputModel = ref("")
+const props = defineProps<{ me: Player, socket: Socket, roomname: string }>();
+const conv = ref<Message[]>([]);
+const inputModel = ref('');
 
 onMounted(() => {
    props.socket.on('get-message', (newMessage: Message) => {
-      conv.value.unshift(newMessage)
+      conv.value.unshift(newMessage);
    })
-})
+});
 
 onUnmounted(() => {
-   props.socket.off('get-message')
-})
+   props.socket.off('get-message');
+});
 
 const sendMessage = () => {
    if (inputModel.value.trim().length !== 0) {
       props.socket.emit('send-message', inputModel.value, props.roomname);
      
    }
-    inputModel.value = ""
-}
+   inputModel.value = '';
+};
 
 </script>

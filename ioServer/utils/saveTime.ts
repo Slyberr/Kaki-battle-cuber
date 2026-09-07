@@ -1,7 +1,6 @@
-import { randomScrambleForEvent } from "cubing/scramble";
-import { Penality, Player, Room } from "../types/types.js";
-import { Server } from "socket.io";
-import { everyoneScored } from "./everyoneScored.js";
+import { Penality, Player, Room } from '../types/types.js';
+import { Server } from 'socket.io';
+import { everyoneScored } from './everyoneScored.js';
 
 /**
  * Buisneed logic when a player saving time.
@@ -30,7 +29,7 @@ export const saveTime = async (
     const player = room.players.find((player: Player) => player.id === playerId);
 
     if (player) {
-      //it mean  "no one in this solve submit before"
+      //it mean  'no one in this solve submit before'
       if (room.currentSolve.solveId === -1) {
         room.currentSolve = {
           solveId: solveId,

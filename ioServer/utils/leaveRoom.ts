@@ -1,6 +1,6 @@
-import { Server } from "socket.io";
-import { Player, Room } from "../types/types.js";
-import { everyoneScored } from "./everyoneScored.js";
+import { Server } from 'socket.io';
+import { Player, Room } from '../types/types.js';
+import { everyoneScored } from './everyoneScored.js';
 
 /**
  * Buisness logic when a user leave a room (by the normal case or disconnection)
@@ -46,9 +46,9 @@ export const leaveRoom = (
       //Socket.io auto-deleting if no one left.
       rooms.delete(roomName);
       console.log(
-        "room",
+        'room',
         roomName,
-        "Deleted. Actual rooms state :",
+        'Deleted. Actual rooms state :',
         Array.from(rooms.keys()),
       );
     } else {
@@ -59,15 +59,15 @@ export const leaveRoom = (
         room.players[0].owner = true;
       }
 
-      console.log("room", roomName, "still standing. Players left : ");
+      console.log('room', roomName, 'still standing. Players left : ');
       room.players.forEach((player) => console.log(player.pseudo));
     }
 
     //Stop display the leaver player and update the room.
-    io.to(roomName).emit("remove-player", room.players, mySocket.id);
+    io.to(roomName).emit('remove-player', room.players, mySocket.id);
 
     //special case : everyone submit his time but last one disconnected.
-    if (room.players.every((player) => player.state === "SCORED")) {
+    if (room.players.every((player) => player.state === 'SCORED')) {
       everyoneScored(rooms,roomName,io);
     } else {
       rooms.set(roomName, room);
