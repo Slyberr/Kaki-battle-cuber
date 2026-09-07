@@ -10,7 +10,7 @@ export type Player = {
 export type Solve = {
   solveId : number | any;
   [idUser : string] : {time: number, finalPenality : 'DNF' | '+2' | '+4' | 'OK'} | any;
-}
+};
 
 export type Room = {
   password?: string;
@@ -22,23 +22,23 @@ export type Room = {
   actualSolveId: number;
   actualScramble: string;
   event:
-    | "222"
-    | "333"
-    | "333oh"
-    | "333bf"
-    | "333fm"
-    | "444"
-    | "444bf"
-    | "555"
-    | "555bf"
-    | "666"
-    | "777"
-    | "fto"
-    | "pyram"
-    | "skewb"
-    | "clock"
-    | "minx"
-    | "sq1";
+    | '222'
+    | '333'
+    | '333oh'
+    | '333bf'
+    | '333fm'
+    | '444'
+    | '444bf'
+    | '555'
+    | '555bf'
+    | '666'
+    | '777'
+    | 'fto'
+    | 'pyram'
+    | 'skewb'
+    | 'clock'
+    | 'minx'
+    | 'sq1';
 };
 
 export type Message = {

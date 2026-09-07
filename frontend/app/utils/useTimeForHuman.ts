@@ -1,13 +1,10 @@
-
 /**
  * This function can translate a timestamp in ms to a MM:SS:cS Format.
  * @param initialTime the (initial) time to translate
  * @returns 
  */
 export const useTimeForHuman = (initialTime: number) : string => {
-  
-  const timeToConvert = initialTime / 1000
-
+  const timeToConvert = initialTime / 1000;
   const min = Math.floor(timeToConvert / 60);
 
   return min == 0

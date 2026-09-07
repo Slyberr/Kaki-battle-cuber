@@ -1,6 +1,5 @@
 <template>
-    <UTable sticky class="max-h-110 ml-2 border border-gray-400 rounded-sm" :columns="colonnes" :data="props.times">
-    </UTable>
+    <UTable sticky class="max-h-110 ml-2 border border-gray-400 rounded-sm" :columns="colonnes" :data="props.times"/>
 </template>
 
 
@@ -26,12 +25,13 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
             },
         },
 
-    ]
+    ];
+
     for (let player of props.players) {
         mainColumns.push({
             accessorKey: player.id,
             header: ({ column }) => {
-                const buttonLabel = `${player.pseudo} \n ${stateForHuman(player.state)} \n mean: ${mean(player.id)} `
+                const buttonLabel = `${player.pseudo} \n ${stateForHuman(player.state)} \n mean: ${mean(player.id)}`;
                 return h('div', { class: 'flex justify-center' },
                     [
                         h('div', { class: 'text-center whitespace-pre-line' }, buttonLabel),
@@ -42,15 +42,17 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
                                     `Ao5 actuelle : ${currentAvg(5, player.id)}\n`,
                                     `Ao12 actuelle : ${currentAvg(12, player.id)}`,
                                 ])
-                            })]);
+                            }
+                        )
+                    ]
+                );
             },
             meta: {
                 class: {
                     th: player.id === props.me.id ? "text-primary" : "text-neutral",
-                    td: 'min-w-37',
+                    td: 'min-w-42',
 
                 },
-
             },
             cell: ({ row }) => {
 
@@ -59,7 +61,7 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
                         const obj = row.getValue(player.id) as { time: number, finalPenality: 'DNF' | '+2' | '+4' | 'OK' };
                         const timeForHuman = useTimeForHuman(obj.time);
                         if (obj.finalPenality === 'DNF') {
-                            return `DNF(${timeForHuman})`
+                            return `DNF(${timeForHuman})`;
                         } else if (obj.finalPenality === '+2') {
                             return `${timeForHuman}+`;
                         } else if (obj.finalPenality === '+4') {
@@ -76,7 +78,7 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
         })
     }
     return mainColumns
-})
+});
 
 const stateForHuman = (state: PlayerState) => {
 
@@ -113,7 +115,7 @@ const isBestSolveTime = (row: TableRow<Solve>, id: string) => {
         }
     }
     return valueToCompare.time === bestTime ? true : false;
-}
+};
 
 const mean = (playerId: string) => {
 
@@ -127,8 +129,7 @@ const mean = (playerId: string) => {
         }
     }
     return timeCumul === 0 ? 'DNF' : useTimeForHuman((timeCumul / countWithNoDNF));
-
-}
+};
 
 const currentAvg = (avgOf: 5 | 12, playerId: string) => {
 
@@ -152,11 +153,11 @@ const currentAvg = (avgOf: 5 | 12, playerId: string) => {
             sortedSolve.forEach((solve) => {
                 timeCumul += solve[playerId].time;
             })
-            return useTimeForHuman((timeCumul / (avgOf - 2)))
+            return useTimeForHuman((timeCumul / (avgOf - 2)));
         }
 
     } else {
-        return 'DNF'
+        return 'DNF';
     }
-}
+};
 </script>

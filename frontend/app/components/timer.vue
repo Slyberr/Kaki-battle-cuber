@@ -1,33 +1,28 @@
 <template>
-  <div class='timer w-full flex justify-center min-h-42'>
-    <div v-if="inputMode === 'KEYBOARD'" class='flex flex-col items-center gap-3'>
+  <div class="timer w-full flex justify-center min-h-42">
+    <div v-if="inputMode === 'KEYBOARD'" class="flex flex-col items-center gap-3">
 
-      <div class='text-4xl transition ease-linear' :class=timer.color>{{ timer.timeDisplayed }}</div>
+      <div class="text-4xl transition ease-linear" :class=timer.color>{{ timer.timeDisplayed }}</div>
       <template v-if="timer.state === 'CONFIRM' || timer.state === 'WAITING_OTHER'">
-        <URadioGroup v-model:model-value='penalitySelected' :items='radioSolvePenalities'
-          :disabled="inspectionPenality === 'DNF' || timer.state === 'WAITING_OTHER'" variant='card' indicator='hidden'
-          orientation='horizontal' :ui="{ container: 'max-h-2' }">
+        <URadioGroup v-model:model-value="penalitySelected" :items="radioSolvePenalities"
+          :disabled="inspectionPenality === 'DNF' || timer.state === 'WAITING_OTHER'" variant="card" indicator="hidden"
+          orientation="horizontal" :ui="{ container: 'max-h-2' }">
         </URadioGroup>
-        <UButton class='my-2' :loading="timer.state === 'WAITING_OTHER'" :label='buttonLabel' @click='saveTime'>
-        </UButton>
+        <UButton class="my-2" :loading="timer.state === 'WAITING_OTHER'" :label="buttonLabel" @click="saveTime" />
       </template>
     </div>
     <div class="flex flex-col w-[25%]" v-if="inputMode === 'MANUALLY'">
       <template v-if="activeInspection && (timer.state === 'BEGIN_STATE' || timer.state === 'INSPECTION')">
-
-        <div class='text-4xl transition ease-linear duration-75 text-center' :class=timer.color>
+        <div class="text-4xl transition ease-linear duration-75 text-center" :class=timer.color>
           {{ timer.timeDisplayed }}</div>
         <template v-if="timer.state === 'INSPECTION'">
-          <p class='text-sm text-center m-4'>(Appuyez sur Espace pour terminer l'inspection)</p>
+          <p class="text-sm text-center m-4">(Appuyez sur Espace pour terminer l'inspection)</p>
         </template>
-
       </template>
       <template v-else>
-        <UInput v-model:model-value='manualTime.input' placeholder="Only Digit or 'DNF'." class='w-full' color='primary'
-          maxlength='6' :disabled='manualTime.disabled'>
-        </UInput>
-        <p>{{ 'Votre temps est : ' + isTimeFormatOk(manualTime.input)[1] }}</p>
-
+        <UInput v-model:model-value="manualTime.input" placeholder="Only Digit or 'DNF'." class="w-full" color="primary"
+          maxlength="6" :disabled="manualTime.disabled" />
+        <p>{{ "Votre temps est : " + isTimeFormatOk(manualTime.input)[1] }}</p>
       </template>
     </div>
   </div>
@@ -89,7 +84,7 @@ const inspectionId = ref<NodeJS.Timeout>();
 const penalitySelected = ref<Penality>('NONE');
 const buttonLabel = ref<string>('Confirmer');
 
-const inspectionValue = ref<number>(15)
+const inspectionValue = ref<number>(15);
 const inspectionPenality = ref<Penality>('NONE');
 
 const emits = defineEmits(['player-changeState', 'time-sended']);
@@ -170,12 +165,11 @@ const keyUpSpaceManager = (event: KeyboardEvent) => {
       }
     }
   }
-}
+};
 
 const keyDownSpaceManager = (event: KeyboardEvent) => {
 
   if (event.code === 'Space') {
-
     //Disabled the timer fonction on input tag
     if ((event.target as HTMLElement).tagName === 'INPUT') {
       return;
@@ -212,7 +206,6 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
 
   //TIMER CAN BE STOPPED BY ANY KEY !
   if (timer.state === 'RUNNING' && props.inputMode === 'KEYBOARD') {
-
     clearInterval(timerIntervalId.value);
     //Save a initial 'toHuman' state before modifie timeDisplayed with the penalities.
     timer.timeFormated = timer.timeDisplayed;
@@ -226,12 +219,11 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
       penalitySelected.value = 'DNF';
       timer.timeDisplayed = '('.concat(timer.timeFormated, ')', ' DNF');
     }
+
     timer.state = 'CONFIRM';
     emits('player-changeState', 'CONFIRMATION');
-
   }
-
-}
+};
 
 const onKeyDownEnter = (event: KeyboardEvent) => {
   if (event.code === 'Enter'
@@ -242,13 +234,12 @@ const onKeyDownEnter = (event: KeyboardEvent) => {
   ) {
     saveTime();
   }
-}
+};
 
 /**
  * code to create Inspection with penalities (+2 and DNF) or not if manual.
  */
 const beginInspection = () => {
-
   timer.state = 'INSPECTION';
   emits('player-changeState', 'INSPECTING');
   timer.timeDisplayed = inspectionValue.value.toString();
@@ -281,9 +272,19 @@ const beginInspection = () => {
   }
   if (props.inputMode === 'MANUALLY') {
     timer.timeDisplayed = inspectionValue.value.toString();
-    inspectionId.value = setInterval(() => {
+    inspectionId.value = setInterval(async () => {
       if (inspectionValue.value > 0) {
+
         inspectionValue.value--;
+        if (inspectionValue.value === 7 && props.audios.length === 4) {
+          await playAudioInspection(props.audios[2]!);
+        }
+
+        if (inspectionValue.value === 3 && props.audios.length === 4) {
+          await playAudioInspection(props.audios[3]!);
+        }
+
+        
         timer.timeDisplayed = inspectionValue.value.toString();
       } else {
         clearInterval(inspectionId.value);
@@ -291,10 +292,9 @@ const beginInspection = () => {
       }
     }, 1000);
   }
-}
+};
 
 const saveTime = () => {
-
   if (props.inputMode === 'KEYBOARD') {
     buttonLabel.value = 'En attente des autres joueurs';
     timer.state = 'WAITING_OTHER';
@@ -346,7 +346,7 @@ const saveTime = () => {
       });
     }
   }
-}
+};
 
 /**
  * if the keyup is triggered before x second, do nothing. Else, the timer will start.
@@ -357,7 +357,7 @@ const timerHoldingBeforeGo = () => {
     timer.color = 'text-emerald-400';
     timer.state = 'READY_TO-SOLVE';
   }, props.readyHoldingTime * 1000);
-}
+};
 
 //Triggered when all player submit the time on server.
 watch(() => props.localPlayerState, async (newState, oldState) => {
@@ -376,7 +376,7 @@ watch(() => penalitySelected.value, async (newVal) => {
     if (newVal === 'PLUS_2' && timer.state === 'CONFIRM') {
       timer.timeDisplayed = inspectionPenality.value === 'PLUS_2'
         ? (parseFloat(timer.timeFormated) + 2).toFixed(2).concat('++')
-        : (parseFloat(timer.timeFormated) + 2).toFixed(2).concat('+')
+        : (parseFloat(timer.timeFormated) + 2).toFixed(2).concat('+');
     }
     if (newVal === 'DNF' && timer.state === 'CONFIRM') {
       timer.timeDisplayed = '('.concat(timer.timeFormated, ')', ' DNF');
@@ -388,7 +388,6 @@ watch(() => penalitySelected.value, async (newVal) => {
         : timer.timeFormated;
     }
   }
-
 });
 
 

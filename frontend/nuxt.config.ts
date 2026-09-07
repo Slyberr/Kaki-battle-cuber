@@ -14,7 +14,6 @@ export default defineNuxtConfig({
         {rel: 'icon', type: 'image/svg+xml', href:'/kbc.svg'}
       ]
     },
-     
   },
 
   runtimeConfig: {

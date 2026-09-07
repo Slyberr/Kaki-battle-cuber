@@ -26,46 +26,46 @@ export const useGetDropDownMenu = (
     [
       {
         label: `Enter le temps (${inputMode.value === 'KEYBOARD' ? 'Au clavier' : 'Manuellement'})` ,
-        icon: "lucide:keyboard",
+        icon: 'lucide:keyboard',
         children: [
           {
-            label: "Au Clavier (barre espace)",
+            label: 'Au Clavier (barre espace)',
             onSelect: () => {
-                inputMode.value = "KEYBOARD"
+                inputMode.value = 'KEYBOARD';
             }
           },
           {
-            label: "Manuellement",
+            label: 'Manuellement',
             onSelect : () => {
-                inputMode.value = "MANUALLY"
+                inputMode.value = "MANUALLY";
             }
           },
         ],
       },
       {
         label: `Presser la barre espace pendant... (${readyHoldingTime.value}s)`,
-        icon: "lucide:timer",
+        icon: 'lucide:timer',
         children: [
           {
-            label: "0 seconde (déclencher dès la touche pressée)",
+            label: '0 seconde (déclencher dès la touche pressée)',
             onSelect: () => {
               readyHoldingTime.value = 0;
             },
           },
           {
-            label: "0.3 seconde",
+            label: '0.3 seconde',
             onSelect: () => {
               readyHoldingTime.value = 0.3;
             },
           },
           {
-            label: "0.55 seconde (Stackmat)",
+            label: '0.55 seconde (Stackmat)',
             onSelect: () => {
               readyHoldingTime.value = 0.55;
             },
           },
           {
-            label: "1 seconde",
+            label: '1 seconde',
             onSelect: () => {
               readyHoldingTime.value = 1;
             },
@@ -73,8 +73,8 @@ export const useGetDropDownMenu = (
         ],
       },
       {
-        label: `Activer/Désactiver l'inspection (${inspection.value ? "Activée" : "Désactivée"})`,
-        icon: "lucide:timer-off",
+        label: `Activer/Désactiver l'inspection (${inspection.value ? 'Activée' : 'Désactivée'})`,
+        icon: 'lucide:timer-off',
         onSelect: () => {
           inspection.value = !inspection.value;
         },
@@ -84,27 +84,27 @@ export const useGetDropDownMenu = (
         icon : 'lucide:volume-2',
         children : [
           {
-            label : "Rien",
+            label : 'Rien',
             onSelect : () => {
-              audioForInspection.value = ['Rien','rien']
+              audioForInspection.value = ['Rien','rien'];
             }
           },
           {
-            label : "8/12",
+            label : '8/12',
             onSelect : () => {
-              audioForInspection.value = ['8/12','8-12','8-louis.wav','12-louis.wav']
+              audioForInspection.value = ['8/12','8-12','8-louis.wav','12-louis.wav'];
             }
           },
           {
-            label : "8/12 secondes",
+            label : '8/12 secondes',
             onSelect : () => {
-              audioForInspection.value = ['8/12 secondes','8-12-sec','8-sec-louis.wav','12-sec-louis.wav']
+              audioForInspection.value = ['8/12 secondes','8-12-sec','8-sec-louis.wav','12-sec-louis.wav'];
             }
           },
           {
-            label : "8/12 secondes Polonais by Le Peuneuj Roux",
+            label : '8/12 secondes Polonais by Le Peuneuj Roux',
             onSelect : () => {
-              audioForInspection.value = ['8/12 secondes en polonais by le Peuneuj Roux','8-12-sec-pol-peuneuj','8-peuneuj.wav','12-peuneuj.wav']
+              audioForInspection.value = ['8/12 secondes en polonais by le Peuneuj Roux','8-12-sec-pol-peuneuj','8-peuneuj.wav','12-peuneuj.wav'];
             }
           }
         ]
@@ -115,117 +115,117 @@ export const useGetDropDownMenu = (
     menuForEveryone.push([
       {
         label: "Changer d'épreuve",
-        icon: "lucide:puzzle",
+        icon: 'lucide:puzzle',
 
         children: [
           [
             {
-              label: "La session sera réinitialisée.",
+              label: 'La session sera réinitialisée.',
             },
             {
-              label: "2x2",
+              label: '2x2',
               onSelect: () => {
-                socket.emit("update-event", "222", roomName.value);
+                socket.emit('update-event', '222', roomName.value);
               },
             },
             {
-              label: "3x3",
+              label: '3x3',
               onSelect: () => {
-                socket.emit("update-event", "333", roomName.value);
+                socket.emit('update-event', '333', roomName.value);
               },
             },
             {
-              label: "3x3oh",
+              label: '3x3oh',
               onSelect: () => {
-                socket.emit("update-event", "333oh", roomName.value);
+                socket.emit('update-event', '333oh', roomName.value);
               },
             },
             {
-              label: "3x3bf",
+              label: '3x3bf',
               onSelect: () => {
-                socket.emit("update-event", "333bf", roomName.value);
+                socket.emit('update-event', '333bf', roomName.value);
               },
             },
             {
-              label: "4x4",
+              label: '4x4',
               onSelect: () => {
-                socket.emit("update-event", "444", roomName.value);
+                socket.emit('update-event', '444', roomName.value);
               },
             },
             {
-              label: "4x4bf",
+              label: '4x4bf',
               onSelect: () => {
-                socket.emit("update-event", "444bf", roomName.value);
+                socket.emit('update-event', '444bf', roomName.value);
               },
             },
             {
-              label: "5x5",
+              label: '5x5',
               onSelect: () => {
-                socket.emit("update-event", "555", roomName.value);
+                socket.emit('update-event', '555', roomName.value);
               },
             },
             {
-              label: "5x5bf",
+              label: '5x5bf',
               onSelect: () => {
-                socket.emit("update-event", "555bf", roomName.value);
+                socket.emit('update-event', '555bf', roomName.value);
               },
             },
             {
-              label: "6x6",
+              label: '6x6',
               onSelect: () => {
-                socket.emit("update-event", "666", roomName.value);
+                socket.emit('update-event', '666', roomName.value);
               },
             },
             {
-              label: "7x7",
+              label: '7x7',
               onSelect: () => {
-                socket.emit("update-event", "777", roomName.value);
+                socket.emit('update-event', '777', roomName.value);
               },
             },
             {
-              label: "Pyraminx",
+              label: 'Pyraminx',
               onSelect: () => {
-                socket.emit("update-event", "pyram", roomName.value);
+                socket.emit('update-event', 'pyram', roomName.value);
               },
             },
             {
-              label: "Skewb",
+              label: 'Skewb',
               onSelect: () => {
-                socket.emit("update-event", "skewb", roomName.value);
+                socket.emit('update-event', 'skewb', roomName.value);
               },
             },
             {
-              label: "Square-1",
+              label: 'Square-1',
               onSelect: () => {
-                socket.emit("update-event", "sq1", roomName.value);
+                socket.emit('update-event', 'sq1', roomName.value);
               },
             },
             {
-              label: "Clock",
+              label: 'Clock',
               onSelect: () => {
-                socket.emit("update-event", "clock", roomName.value);
+                socket.emit('update-event', 'clock', roomName.value);
               },
             },
             {
-              label: "Megaminx",
+              label: 'Megaminx',
               onSelect: () => {
-                socket.emit("update-event", "minx", roomName.value);
+                socket.emit('update-event', 'minx', roomName.value);
               },
             },
             {
-              label: "FTO",
+              label: 'FTO',
               onSelect: () => {
-                socket.emit("update-event", "fto", roomName.value);
+                socket.emit('update-event', 'fto', roomName.value);
               },
             },
           ],
         ],
       },
       {
-        label: "Réinitialiser la session",
-        icon: "lucide:brush-cleaning",
+        label: 'Réinitialiser la session',
+        icon: 'lucide:brush-cleaning',
         onSelect: () => {
-          socket.emit("clear-session", roomName.value);
+          socket.emit('clear-session', roomName.value);
         },
       },
     ]);

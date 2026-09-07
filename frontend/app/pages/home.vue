@@ -6,8 +6,8 @@
 
     <!--- Créer une room-->
     <UModal>
-      <div class="flex justify-center ">
-        <UButton class="relative" icon="lucide:plus">Créer une nouvelle room</UButton>
+      <div class="flex justify-center">
+        <UButton class="relative" icon="lucide:plus" label="Créer une nouvelle room" />
       </div>
       <template #content>
         <UForm :schema="schema" :state="state" class="flex flex-col m-8 space-y-4 h-full overflow-scroll" @submit="createRoom">
@@ -36,24 +36,23 @@
     <!--- Rejoindre une room-->
     <UModal>
       <div class="flex justify-center">
-        <UButton class="relative" icon="lucide:users">Rejoindre une room</UButton>
+        <UButton class="relative" icon="lucide:users" label="Rejoindre une room" />
       </div>
       <template #content>
-
         <div class="overflow-auto h-full">
           <p class="text-xl m-2">{{ (rooms.length) }} Rooms actives</p>
-          <div class="flex " v-for="room in rooms">
+          <div class="flex" v-for="room in rooms">
 
             <UModal class="px-3">
               <div class="grid grid-cols-[3fr_3fr_1fr] w-full py-5">
                 <div class="flex items-center gap-4">
                   <p class="self-center">{{ room.roomName }}</p>
-                  <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'"></UIcon>
+                  <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'"/>
                 </div>
 
                 <div class="flex items-center gap-2">
                   <p>{{ room.length }}</p>
-                  <UIcon name="lucide:users"></UIcon>
+                  <UIcon name="lucide:users"/>
                 </div>
                 <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
               </div>
@@ -70,94 +69,87 @@
                   <UButton type="submit">Accéder à la salle</UButton>
                 </UForm>
               </template>
-
             </UModal>
           </div>
         </div>
-        <UForm :schema="schema" :state="state" class="m-8 space-y-4" @submit="">
-
-        </UForm>
       </template>
     </UModal>
   </UPageHero>
 </template>
 
 <script setup lang="ts">
-import * as v from 'valibot'
+import * as v from 'valibot';
 
-const rooms = useState<{ roomName: string, isPrivate: boolean, length: number }[]>('rooms')
+const rooms = useState<{ roomName: string, isPrivate: boolean, length: number }[]>('rooms');
 
 const state = reactive<{ roomname: string, isPrivate: false, password: string, pseudo: string }>({
-  roomname: "",
+  roomname: '',
   isPrivate: false,
-  password: "",
-  pseudo: ""
-})
+  password: '',
+  pseudo: ''
+});
 
 const stateJoin = reactive<{ password: string, pseudo: string }>({
-  password: "",
-  pseudo: "",
-})
+  password: '',
+  pseudo: '',
+});
 
 const schema = computed(() => v.object({
-  roomname: v.pipe(v.string(), v.minLength(3, "Minimum 3 caractères."), v.maxLength(20, "Maximum de 20 caractères.")),
-  password: state.isPrivate ? v.pipe(v.string(), v.minLength(4, "Au moins 4 caractères"), v.maxLength(10, "Maximum de 10 caractères.")) : v.pipe(v.string(), v.minLength(0)),
-  pseudo: v.pipe(v.string(), v.minLength(1, "Une lettre au moins !"), v.maxLength(15, "Maximum de 15 caractères")),
-})
-)
+  roomname: v.pipe(v.string(), v.minLength(3, 'Minimum 3 caractères.'), v.maxLength(20, 'Maximum de 20 caractères.')),
+  password: state.isPrivate ? v.pipe(v.string(), v.minLength(4, 'Au moins 4 caractères'), v.maxLength(10, 'Maximum de 10 caractères.')) : v.pipe(v.string(), v.minLength(0)),
+  pseudo: v.pipe(v.string(), v.minLength(1, 'Une lettre au moins !'), v.maxLength(15, 'Maximum de 15 caractères')),
+}));
 
 const schemaJoin = computed(() => v.object({
   password: v.pipe(v.string()),
-  pseudo: v.pipe(v.string(), v.minLength(1, "Une lettre au moins !"), v.maxLength(15, "Maximum de 15 caractères")),
-})
-)
+  pseudo: v.pipe(v.string(), v.minLength(1, 'Une lettre au moins !'), v.maxLength(15, 'Maximum de 15 caractères')),
+}));
+
 definePageMeta({
   middleware: [
     function (to, from) {
       if (from.path.includes('/room/') && !to.query.return) {
-        const redirectToast = useToast()
+        const redirectToast = useToast();
         redirectToast.add({
-          title: "Redirection",
+          title: 'Redirection',
           description: "Vous avez tenté de joindre la salle via une URL. \n Veuillez utiliser le bouton 'Rejoindre une room.'",
           duration: 10000
         })
       }
     }
   ]
-})
+});
 
-let socket = useSocket()
+let socket = useSocket();
 
 onMounted(() => {
-  socket.on("go-to-room", (roomName) => {
+  socket.on('go-to-room', (roomName) => {
     navigateTo('/room/' + roomName);
-  })
-})
+  });
+});
 
 onUnmounted(() => {
-  socket.off("go-to-room");
-})
+  socket.off('go-to-room');
+});
 
 const createRoom = async () => {
-
   if (socket !== null) {
-    socket.emit("create-room", {
+    socket.emit('create-room', {
       roomName: state.roomname,
       isPrivate: state.isPrivate,
       password: state.password,
       pseudo: state.pseudo
     });
   }
-}
+};
 
 const joinRoom = async (currentRoom: string) => {
-
   if (socket !== null) {
-    socket.emit("join-room", {
+    socket.emit('join-room', {
       roomName: currentRoom,
       password: stateJoin.password,
       pseudo: stateJoin.pseudo
     })
   }
-}
+};
 </script>
