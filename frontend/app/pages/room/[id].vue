@@ -40,7 +40,7 @@
     </div>
      
   </div>
- <div class="grid grid-cols-[2fr_1fr] w-full gap-8">
+ <div v-if="me" class="grid grid-cols-[2fr_1fr] w-full gap-8">
         <TabBattle 
         class="grow-8" 
         v-if="roomPlayers.length > 0" 
