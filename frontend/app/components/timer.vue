@@ -8,12 +8,12 @@
           :disabled="inspectionPenality === 'DNF' || timer.state === 'WAITING_OTHER'" variant="card" indicator="hidden"
           orientation="horizontal" :ui="{ container: 'max-h-2' }">
         </URadioGroup>
-        <UButton class="my-2" :loading="timer.state === 'WAITING_OTHER'" :label="buttonLabel" @click="saveTime"/>
+        <UButton class="my-2" :loading="timer.state === 'WAITING_OTHER'" :label="buttonLabel" @click="saveTime" />
       </template>
     </div>
     <div class="flex flex-col w-[25%]" v-if="inputMode === 'MANUALLY'">
       <template v-if="activeInspection && (timer.state === 'BEGIN_STATE' || timer.state === 'INSPECTION')">
-        <div class="0text-4xl transition ease-linear duration-75 text-center" :class=timer.color>
+        <div class="text-4xl transition ease-linear duration-75 text-center" :class=timer.color>
           {{ timer.timeDisplayed }}</div>
         <template v-if="timer.state === 'INSPECTION'">
           <p class="text-sm text-center m-4">(Appuyez sur Espace pour terminer l'inspection)</p>
@@ -21,7 +21,7 @@
       </template>
       <template v-else>
         <UInput v-model:model-value="manualTime.input" placeholder="Only Digit or 'DNF'." class="w-full" color="primary"
-          maxlength="6" :disabled="manualTime.disabled"/>
+          maxlength="6" :disabled="manualTime.disabled" />
         <p>{{ "Votre temps est : " + isTimeFormatOk(manualTime.input)[1] }}</p>
       </template>
     </div>
@@ -272,9 +272,19 @@ const beginInspection = () => {
   }
   if (props.inputMode === 'MANUALLY') {
     timer.timeDisplayed = inspectionValue.value.toString();
-    inspectionId.value = setInterval(() => {
+    inspectionId.value = setInterval(async () => {
       if (inspectionValue.value > 0) {
+
         inspectionValue.value--;
+        if (inspectionValue.value === 7 && props.audios.length === 4) {
+          await playAudioInspection(props.audios[2]!);
+        }
+
+        if (inspectionValue.value === 3 && props.audios.length === 4) {
+          await playAudioInspection(props.audios[3]!);
+        }
+
+        
         timer.timeDisplayed = inspectionValue.value.toString();
       } else {
         clearInterval(inspectionId.value);

@@ -50,7 +50,7 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
             meta: {
                 class: {
                     th: player.id === props.me.id ? "text-primary" : "text-neutral",
-                    td: 'min-w-37',
+                    td: 'min-w-42',
 
                 },
             },
