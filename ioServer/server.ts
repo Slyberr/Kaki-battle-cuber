@@ -225,6 +225,7 @@ io.on('connection', (socket) => {
         event: room.event,
         scramble: room.actualScramble,
       });
+      io.emit('get-rooms',displayRoomsForHomePage(rooms));
     } else {
       socket.emit('error', "Vous n'avez pas les droits de faire cette action.");
     }

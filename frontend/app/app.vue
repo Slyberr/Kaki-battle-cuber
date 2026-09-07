@@ -9,7 +9,9 @@
 
 
 <script setup lang="ts">
-const rooms = useState<{roomName : string,length : number}[]>('rooms');
+import type { EventID } from './types/solve';
+
+const rooms = useState<{ roomName: string, isPrivate: boolean,currentEvent : EventID; length: number}[]>('rooms');
 const socket = useSocket();
 const errorToast = useToast();
 onMounted(() => {
@@ -32,7 +34,7 @@ onMounted(() => {
       return navigateTo("/home?return=yes");;
     });
 
-    socket?.on('get-rooms', (therooms) => {
+    socket?.on('get-rooms', (therooms : { roomName: string, isPrivate: boolean,currentEvent : EventID; length: number}[]) => {
       rooms.value = therooms;
     });
   })
