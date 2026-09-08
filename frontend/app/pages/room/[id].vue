@@ -20,50 +20,41 @@
   </UHeader>
 
   <div class="flex flex-col">
-  <div>
-    <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
-      <h1 class="flex text-center text-3xl">{{ roomName }}</h1>
+    <div>
+      <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
+        <h1 class="flex text-center text-3xl">{{ roomName }}</h1>
 
-      <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
-      <p class="text-2xl">{{ puzzle }}</p>
-      <p class="text-center max-w-[max(50%,600px)] h-20 ">{{ scramble }}</p>
+        <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
+        <p class="text-2xl">{{ puzzle }}</p>
+        <p class="text-center max-w-[max(50%,600px)] m-2 text-xs sm:text-sm md:text-base 2xl:text-lg h-20 sm:h-28 md:h-32  ">{{ scramble }}</p>
 
-      <Timer class="mt-10" 
-        :local-player-state="localPlayerState" 
-        :ready-holding-time="readyHoldingTime"
-        :active-inspection="inspection" 
-        :input-mode="inputMode"
-        :audios="audiosForInspection"
-        @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
-        @time-sended="(time: number,inspectionPenality : string,penalitySelected : string) => sendTime(time,inspectionPenality,penalitySelected)" />
 
+        <div class="flex flex-col w-full">
+          <Timer class="mb-10 timer flex justify-center" :local-player-state="localPlayerState" :ready-holding-time="readyHoldingTime"
+            :active-inspection="inspection" :input-mode="inputMode" :audios="audiosForInspection"
+            @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
+            @time-sended="(time: number, inspectionPenality: string, penalitySelected: string) => sendTime(time, inspectionPenality, penalitySelected)" />
+
+          <div id="twisty-container"
+            class="flex w-full justify-end" />
+        </div>
+      </div>
       <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
-        <UButton variant="ghost" class="self-start m-2" icon="lucide:settings"/>
+        <UButton variant="ghost" class="self-start m-2" icon="lucide:settings" />
       </UDropdownMenu>
-    
-    </div>
-     
-  </div>
- <div v-if="me" class="grid grid-cols-[2fr_1fr] w-full gap-8">
-        <TabBattle 
-        class="grow-8" 
-        v-if="roomPlayers.length > 0" 
-        :players="roomPlayers" 
-        :times="allSolves" 
-        :solve-id="actualSolveId"
-        :me="me"/>
-        
-       <Tchatbox  
-       class="grow min-w-0" 
-       :me="me" 
-       :socket="socket" 
-       :roomname="(roomName as string)"/>
-     </div>
 
-</div>
-<div id="footer" class=" flex justify-end items-center bottom-0 w-full">
-  <div id="twisty-container" class="2xl:scale-100 xl:scale-90 scale-75 flex items-center"></div>
-</div>
+    </div>
+    <div v-if="me" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr] lg:grid-cols-[2fr_1fr] w-full ">
+      <TabBattle class="grow-8" v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves"
+        :solve-id="actualSolveId" :me="me" />
+
+      <Tchatbox class="grow min-w-0" :me="me" :socket="socket" :roomname="(roomName as string)" />
+    </div>
+
+  </div>
+  <div id="footer" class=" flex justify-end items-center bottom-0 w-full">
+
+  </div>
 </template>
 
 
@@ -90,7 +81,7 @@ const puzzle = ref<string>('');
 const localPlayerState = ref<PlayerState>('READY');
 const readyHoldingTime = ref<number>(0.3);
 const inspection = ref<boolean>(false);
-const audiosForInspection = ref<string[]>(['Rien', 'rien']);
+const audiosForInspection = ref<(string | HTMLAudioElement)[]>(['Rien', 'rien']);
 
 const inputMode = ref<'KEYBOARD' | 'MANUALLY'>('KEYBOARD');
 const drawer = ref<TwistyPlayer>();
@@ -111,7 +102,7 @@ const dropDownItems = computed((): DropdownMenuItem[][] => {
 
 definePageMeta({
   middleware: [
-    function (to,from) {
+    function (_, from) {
       if (from.path !== '/home') {
         return navigateTo('/home', { redirectCode: 301 })
       }
@@ -142,6 +133,7 @@ onMounted(() => {
       drawer.value.visualization = '2D';
       drawer.value.controlPanel = 'none';
       drawer.value.background = 'none';
+      drawer.value.classList.add('scale-60', 'sm:scale-70', 'lg:scale-80', 'xl:scale-90','2xl:scale-100');
       const wrapper = document.getElementById('twisty-container')!;
       wrapper.appendChild(drawer.value);
     }
@@ -158,7 +150,7 @@ onMounted(() => {
 
   //new player just come / someone change his state
   socket.on('players-updated', (players: Player[]) => {
-    if(players) {
+    if (players) {
       roomPlayers.value = players;
       me.value = players.find((player) => player.id === me.value.id)!;
     }
@@ -233,8 +225,8 @@ onMounted(() => {
 
 });
 
-const sendTime = (time: number,inspectionPenality: string, penalitySelected: string) => {
-  socket.emit('save-time', { roomName: roomName.value, time: time, inspectionPenality:inspectionPenality,penalitySelected: penalitySelected, solveId: actualSolveId.value });
+const sendTime = (time: number, inspectionPenality: string, penalitySelected: string) => {
+  socket.emit('save-time', { roomName: roomName.value, time: time, inspectionPenality: inspectionPenality, penalitySelected: penalitySelected, solveId: actualSolveId.value });
   localPlayerState.value = 'SCORED';
   scramble.value = 'Attente des autres joueurs...';
 };
@@ -244,14 +236,15 @@ const leaveRoom = () => {
   return navigateTo("/home?return=yes");
 };
 
-onUnmounted(() => {
-  document.body.querySelector('twisty-player')?.remove();
+onBeforeUnmount(() => {
+   document.body.querySelector('twisty-player')?.remove();
   socket.off("send-all-room-data");
   socket.off("players-updated");
   socket.off("remove-player");
   socket.off("nextSolve");
   socket.off("event-updated");
   socket.off("session-cleaned");
-});
+})
+
 
 </script>

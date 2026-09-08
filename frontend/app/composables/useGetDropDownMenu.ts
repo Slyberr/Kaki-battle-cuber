@@ -18,7 +18,7 @@ export const useGetDropDownMenu = (
   readyHoldingTime: Ref<Number>,
   inspection: Ref<boolean>,
   inputMode: Ref<'KEYBOARD' | 'MANUALLY'>,
-  audioForInspection: Ref<string[]>,
+  audioForInspection: Ref<(string| HTMLAudioElement)[]>,
   socket: Socket,
   roomName: Ref<string>,
   me: Ref<Player>,
@@ -39,11 +39,11 @@ export const useGetDropDownMenu = (
   const menuForEveryone: DropdownMenuItem[][] = [
     [
       {
-        label: `Mode du chronomètre (${inputMode.value === 'KEYBOARD' ? 'Clavier' : 'Manuel'})`,
+        label: `Mode du chronomètre (${inputMode.value === 'KEYBOARD' ? 'Clavier/Souris' : 'Manuel'})`,
         icon: 'lucide:keyboard',
         children: [
           {
-            label: 'Clavier (barre espace)',
+            label: 'Clavier/Souris (barre espace)',
             onSelect: () => {
               inputMode.value = 'KEYBOARD';
             },
@@ -99,7 +99,7 @@ export const useGetDropDownMenu = (
             },
           },
           {
-            label: `Voix pour l'inspection (${audioForInspection.value[0]})`,
+            label: `Son pour l'inspection (${audioForInspection.value[0]})`,
             icon: 'lucide:volume-2',
             disabled : !inspection.value,
             children: [
@@ -118,8 +118,8 @@ export const useGetDropDownMenu = (
                       audioForInspection.value = [
                         '8/12',
                         '8-12',
-                        '8-louis.wav',
-                        '12-louis.wav',
+                        new Audio('/audio/8-louis.wav'),
+                        new Audio('/audio/12-louis.wav'),
                       ];
                     },
                   },
@@ -129,8 +129,8 @@ export const useGetDropDownMenu = (
                       audioForInspection.value = [
                         '8/12 secondes',
                         '8-12-sec',
-                        '8-sec-louis.wav',
-                        '12-sec-louis.wav',
+                        new Audio('/audio/8-sec-louis.wav'),
+                        new Audio('/audio/12-sec-louis.wav'),
                       ];
                     },
                   },
@@ -140,8 +140,8 @@ export const useGetDropDownMenu = (
                       audioForInspection.value = [
                         '8/12 secondes en polonais by le Peuneuj Roux',
                         '8-12-sec-pol-peuneuj',
-                        '8-peuneuj.wav',
-                        '12-peuneuj.wav',
+                        new Audio('/audio/8-peuneuj.wav'),
+                        new Audio('/audio/12-peuneuj.wav'),
                       ];
                     },
                   },
@@ -156,8 +156,8 @@ export const useGetDropDownMenu = (
                       audioForInspection.value = [
                         'Simples pings',
                         'simples-pings',
-                        '8-simple-ping.wav',
-                        '12-simple-ping.wav',
+                        new Audio('/audio/8-simple-ping.wav'),
+                        new Audio('/audio/12-simple-ping.wav'),
                       ];
                     },
                   },
@@ -168,8 +168,8 @@ export const useGetDropDownMenu = (
                       audioForInspection.value = [
                         'Simple/Triple ping',
                         'simple-triple-ping',
-                        '8-simple-ping.wav',
-                        '12-triple-ping.wav',
+                        new Audio('/audio/8-simple-ping.wav'),
+                        new Audio('/audio/12-triple-ping.wav'),
                       ];
                     },
                   },

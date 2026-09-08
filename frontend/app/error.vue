@@ -3,8 +3,8 @@
  <UError
     :error="{
       statusCode: props.error.status,
-      statusMessage: 'Mauvais algo !',
-      message: 'Cette page n\'existe pas.'
+      statusMessage: props.error.status === 404 ? 'Mauvais algo !' : 'Erreur serveur !',
+      message: props.error.status === 404 ? 'Cette page n\'existe pas.' :'Ce n\'est pas de votre faute'
     }",
     :clear="{
         label:'Revenir à l\'accueil'

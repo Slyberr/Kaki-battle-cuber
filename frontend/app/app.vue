@@ -45,7 +45,7 @@ onMounted(() => {
   })
 });
 
-onUnmounted(()=> {
+onBeforeUnmount(()=> {
   socket.off('get-rooms');
 });
 </script>
