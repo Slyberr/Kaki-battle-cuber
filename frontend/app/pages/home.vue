@@ -113,7 +113,7 @@ definePageMeta({
         const redirectToast = useToast();
         redirectToast.add({
           title: 'Redirection',
-          description: "Vous avez tenté de joindre la salle via une URL. \n Veuillez utiliser le bouton 'Rejoindre une room.'",
+          description: "Quelque chose d'inattendu s'est produit, vous avez été redirigé à l'accueil",
           duration: 6000
         })
       }
@@ -129,7 +129,7 @@ onMounted(() => {
   });
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   socket.off('go-to-room');
 });
 

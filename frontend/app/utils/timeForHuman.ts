@@ -3,7 +3,7 @@
  * @param initialTime the (initial) time to translate
  * @returns 
  */
-export const useTimeForHuman = (initialTime: number) : string => {
+export const timeForHuman = (initialTime: number) : string => {
   const timeToConvert = initialTime / 1000;
   const min = Math.floor(timeToConvert / 60);
 

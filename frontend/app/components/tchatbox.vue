@@ -1,11 +1,11 @@
 <template>
-   <div class="flex flex-col border-secondary">
+   <div class="flex flex-col border-secondary m-4 sm:m-2">
       <p class="text-primary p-2">Tchat de <i>{{ props.roomname }}</i></p>
 
 
 
 
-      <div class="tchat-container text-gray-400 bg-gray-950 min-h-0 h-80  mr-4 flex flex-col overflow-y-scroll  border rounded-t-2xl">
+      <div class="tchat-container text-gray-400 bg-gray-950 min-h-0 h-80 flex flex-col overflow-y-scroll  border rounded-t-2xl">
 
          <div id="area-of-chat">
             <div class="flex flex-col mb-2 text-sm pt-2 pl-2" v-for="msg in conv">
@@ -62,7 +62,7 @@ onMounted(() => {
    })
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
    props.socket.off('get-message');
 });
 

@@ -1,9 +1,10 @@
 <template>
-    <UTable sticky class="max-h-110 ml-2 border border-gray-400 rounded-sm" :columns="colonnes" :data="props.times"/>
+    <UTable sticky class="max-h-110 mx-2 border border-gray-400 rounded-sm" :columns="colonnes" :data="props.times"/>
 </template>
 
 
 <script setup lang="ts">
+import { timeForHuman } from '#imports';
 import type { TableColumn, TableRow } from '@nuxt/ui'
 import type { Player, PlayerState } from '~/types/player';
 import type { Solve } from '~/types/solve';
@@ -59,15 +60,15 @@ const colonnes = computed<TableColumn<Solve>[]>(() => {
                 return h('div', { class: `${isBestSolveTime(row, player.id) ? 'text-primary' : 'text-gray-100'}` }, () => {
                     if (row.getValue(player.id) !== undefined) {
                         const obj = row.getValue(player.id) as { time: number, finalPenality: 'DNF' | '+2' | '+4' | 'OK' };
-                        const timeForHuman = useTimeForHuman(obj.time);
+                        const timeReadable = timeForHuman(obj.time);
                         if (obj.finalPenality === 'DNF') {
-                            return `DNF(${timeForHuman})`;
+                            return `DNF(${timeReadable})`;
                         } else if (obj.finalPenality === '+2') {
-                            return `${timeForHuman}+`;
+                            return `${timeReadable}+`;
                         } else if (obj.finalPenality === '+4') {
-                            return `${timeForHuman}++`;
+                            return `${timeReadable}++`;
                         } else {
-                            return timeForHuman;
+                            return timeReadable;
                         }
 
                     } else {
@@ -128,7 +129,7 @@ const mean = (playerId: string) => {
             timeCumul += playerSolve.time;
         }
     }
-    return timeCumul === 0 ? 'DNF' : useTimeForHuman((timeCumul / countWithNoDNF));
+    return timeCumul === 0 ? 'DNF' : timeForHuman((timeCumul / countWithNoDNF));
 };
 
 const currentAvg = (avgOf: 5 | 12, playerId: string) => {
@@ -153,7 +154,7 @@ const currentAvg = (avgOf: 5 | 12, playerId: string) => {
             sortedSolve.forEach((solve) => {
                 timeCumul += solve[playerId].time;
             })
-            return useTimeForHuman((timeCumul / (avgOf - 2)));
+            return timeForHuman((timeCumul / (avgOf - 2)));
         }
 
     } else {
