@@ -22,20 +22,18 @@
             ⚠️ CONCERNANT L'UTILISATION DU CHAT :
             <br>
             <br>
-            - Ce chat n'est pas chiffrée de bout en bout : Veillez à ne transmettre AUCUNE information sensibles même
-            votre prénom.
+            - Ce chat n'est pas chiffré de bout en bout : Veillez à ne transmettre AUCUNE information sensible (même votre prénom par exemple).
 
             <br>
             - Vous n'avez pas accès à l'ancien historique de message.
             <br>
             - Les messages ne sont conservés qu'en local : le serveur ne fait que transiter les données.
             <br>
-            - Lorsque la dernière personne est partie ou que la room est supprimées, les messages sont alors
+            - Lorsque la dernière personne est partie ou que la room est supprimée, les messages sont
             naturellement supprimés.
             <br>
-            - Restez courtois, polis et veuillez à ne pas céder à l'expression d'une quelqueconque haine.
+            - Restez courtois, respecteux et veuillez ne pas céder à l'expression d'une quelqueconque haine.
             <br>
-
          </p>
 
       </div>
