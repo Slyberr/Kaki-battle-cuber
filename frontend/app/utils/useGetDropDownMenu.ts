@@ -110,38 +110,71 @@ export const useGetDropDownMenu = (
                 },
               },
               {
-                label: '8/12',
-                onSelect: () => {
-                  audioForInspection.value = [
-                    '8/12',
-                    '8-12',
-                    '8-louis.wav',
-                    '12-louis.wav',
-                  ];
-                },
+                label: 'Voix',
+                children : [
+                  {
+                    label: '8/12',
+                    onSelect: () => {
+                      audioForInspection.value = [
+                        '8/12',
+                        '8-12',
+                        '8-louis.wav',
+                        '12-louis.wav',
+                      ];
+                    },
+                  },
+                  {
+                    label: '8/12 secondes',
+                    onSelect: () => {
+                      audioForInspection.value = [
+                        '8/12 secondes',
+                        '8-12-sec',
+                        '8-sec-louis.wav',
+                        '12-sec-louis.wav',
+                      ];
+                    },
+                  },
+                  {
+                    label: '8/12 secondes Polonais by Le Peuneuj Roux',
+                    onSelect: () => {
+                      audioForInspection.value = [
+                        '8/12 secondes en polonais by le Peuneuj Roux',
+                        '8-12-sec-pol-peuneuj',
+                        '8-peuneuj.wav',
+                        '12-peuneuj.wav',
+                      ];
+                    },
+                  },
+                ]
               },
               {
-                label: '8/12 secondes',
-                onSelect: () => {
-                  audioForInspection.value = [
-                    '8/12 secondes',
-                    '8-12-sec',
-                    '8-sec-louis.wav',
-                    '12-sec-louis.wav',
-                  ];
-                },
-              },
-              {
-                label: '8/12 secondes Polonais by Le Peuneuj Roux',
-                onSelect: () => {
-                  audioForInspection.value = [
-                    '8/12 secondes en polonais by le Peuneuj Roux',
-                    '8-12-sec-pol-peuneuj',
-                    '8-peuneuj.wav',
-                    '12-peuneuj.wav',
-                  ];
-                },
-              },
+                label: 'Son',
+                children : [
+                  {
+                    label: 'Simples pings',
+                    onSelect: () => {
+                      audioForInspection.value = [
+                        'Simples pings',
+                        'simples-pings',
+                        '8-simple-ping.wav',
+                        '12-simple-ping.wav',
+                      ];
+                    },
+                  },
+                 
+                  {
+                    label: 'Simple/Triple ping',
+                    onSelect: () => {
+                      audioForInspection.value = [
+                        'Simple/Triple ping',
+                        'simple-triple-ping',
+                        '8-simple-ping.wav',
+                        '12-triple-ping.wav',
+                      ];
+                    },
+                  },
+                ]
+              }  
             ],
           },
         ],
