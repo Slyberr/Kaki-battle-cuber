@@ -15,7 +15,7 @@
   <div class="flex flex-col">
     <div>
       <div v-if="me" class="flex flex-col items-center gap-4 w-full">
-        <div id="head-info" class="flex flex-col text-center w-full border">
+        <div id="head-info" class="flex flex-col text-center w-full">
           <h1 class="text-3xl">{{ roomName }}</h1>
 
           <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
