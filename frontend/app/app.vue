@@ -14,6 +14,11 @@ import type { EventID } from './types/solve';
 const rooms = useState<{ roomName: string, isPrivate: boolean,currentEvent : EventID; length: number}[]>('rooms');
 const socket = useSocket();
 const errorToast = useToast();
+
+//theme dark is for everyone on 1.0.
+const colorMode = useColorMode();
+colorMode.preference = 'dark';
+
 onMounted(() => {
    socket.on('connect', () => {
 
