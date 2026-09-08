@@ -6,6 +6,9 @@ export default defineNuxtConfig({
   modules: ["@nuxt/ui", "@nuxt/icon"],
   css: ["~/assets/css/main.css"],
   ssr: false,
+  routeRules : {
+    '/': {redirect: 'home'}
+  },
 
   app: {
     head: {
