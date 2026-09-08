@@ -101,6 +101,7 @@ export const useGetDropDownMenu = (
           {
             label: `Voix pour l'inspection (${audioForInspection.value[0]})`,
             icon: 'lucide:volume-2',
+            disabled : !inspection.value,
             children: [
               {
                 label: 'Rien',

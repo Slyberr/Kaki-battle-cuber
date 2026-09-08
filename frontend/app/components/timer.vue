@@ -398,6 +398,10 @@ watch(() => penalitySelected.value, async (newVal) => {
 
 
 onUnmounted(() => {
+  //fix #55
+  clearInterval(inspectionId.value);
+  clearInterval(holdingSpaceId.value);
+  clearInterval(timerIntervalId.value);
   window.removeEventListener('keyup', keyUpSpaceManager);
   window.removeEventListener('keydown', keyDownSpaceManager);
   window.removeEventListener('keydown', onKeyDownEnter);
