@@ -14,25 +14,24 @@
 
   <div class="flex flex-col">
     <div>
-      <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
-        <h1 class="flex text-center text-3xl">{{ roomName }}</h1>
+      <div v-if="me" class="flex flex-col items-center gap-4 w-full">
+        <div id="head-info" class="flex flex-col text-center w-full border">
+          <h1 class="text-3xl">{{ roomName }}</h1>
 
-        <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
-        <p class="text-2xl">{{ puzzle }}</p>
-        <p
-          class="text-center max-w-[max(50%,600px)] m-2 text-xs sm:text-sm md:text-base 2xl:text-lg h-20 sm:h-28 md:h-32  ">
-          {{ scramble }}</p>
+          <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
+          <p class="text-2xl">{{ puzzle }}</p>
+          <p
+            class="text-center m-2 text-xs sm:text-sm md:text-base 2xl:text-lg h-20 sm:h-28 md:h-32  ">
+            {{ scramble }}</p>
 
-
-        <div class="flex flex-col w-full">
-          <Timer class="h-20 timer flex justify-center" :local-player-state="localPlayerState"
+             <Timer class="h-20 timer flex justify-center" :local-player-state="localPlayerState"
             :ready-holding-time="readyHoldingTime" :active-inspection="inspection" :input-mode="inputMode"
             :audios="audiosForInspection"
-            @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state); if (state === 'CONFIRMATION') {scramble = 'Confirmation du temps...'} }"
+            @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state); if (state === 'CONFIRMATION') { scramble = 'Confirmation du temps...' } }"
             @time-sended="(time: number, inspectionPenality: string, penalitySelected: string) => sendTime(time, inspectionPenality, penalitySelected)" />
+        </div>
 
           <div id="twisty-container" class="flex w-full justify-end" />
-        </div>
       </div>
       <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings" />

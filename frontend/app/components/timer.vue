@@ -3,10 +3,10 @@
   <div v-if="inputMode === 'KEYBOARD'" class="relative flex flex-col items-center gap-3">
 
 
-    <div class="text-2xl text-center sm:text-3xl lg:text-4xl transition ease-linear" :class=timer.color>{{
+    <div class="text-2xl text-center sm:text-3xl lg:text-4xl transition ease-linear duration-75 select-none" :class=timer.color>{{
       timer.timeDisplayed }}</div>
 
-    <div class="absolute top-20 flex justify-center gap-2"
+    <div class="absolute -top-12 flex justify-center gap-2"
       v-if="timer.state === 'CONFIRM' || timer.state === 'WAITING_OTHER'">
       <URadioGroup v-model:model-value="penalitySelected" :items="radioSolvePenalities"
         :disabled="inspectionPenality === 'DNF' || timer.state === 'WAITING_OTHER'" variant="card" indicator="hidden"
@@ -18,7 +18,7 @@
   <!--if manual mod-->
   <div v-else class="flex flex-col items-center w-full">
     <template v-if="activeInspection && (timer.state === 'BEGIN_STATE' || timer.state === 'INSPECTION')">
-      <div class="text-4xl transition ease-linear duration-75 text-center" :class=timer.color>
+      <div class="text-2xl text-center sm:text-3xl lg:text-4xl transition ease-linear duration-75 select-none" :class=timer.color>
         {{ timer.timeDisplayed }}</div>
       <template v-if="timer.state === 'INSPECTION'">
         <p class="text-sm text-center m-4">(Appuyez sur Espace pour terminer l'inspection)</p>
@@ -106,8 +106,8 @@ onMounted(() => {
   window.addEventListener('keydown', keyDownSpaceManager);
   window.addEventListener('keyup', keyUpSpaceManager);
   window.addEventListener('keydown', onKeyDownEnter);
-  document.getElementById('playground')!.addEventListener('pointerup', timerUpManager);
-  document.getElementById('playground')!.addEventListener('pointerdown', timerDownManager);
+  document.getElementById('head-info')!.addEventListener('touchend', timerUpManager);
+  document.getElementById('head-info')!.addEventListener('touchstart', timerDownManager);
 });
 
 //UTILS don't want to make a utils/UseKeyXSpaceManager beacause lot of variables to send.
@@ -123,7 +123,7 @@ const keyUpSpaceManager = (event: KeyboardEvent) => {
   }
 };
 
-const timerDownManager = (event: KeyboardEvent | PointerEvent) => {
+const timerDownManager = (event: KeyboardEvent | TouchEvent) => {
 
   //exit if it's the tchat input -> can make whitespace.
   if ((event.target as HTMLElement).tagName === 'INPUT') {
@@ -182,7 +182,7 @@ const timerDownManager = (event: KeyboardEvent | PointerEvent) => {
 
 }
 
-const timerUpManager = (event: KeyboardEvent | PointerEvent) => {
+const timerUpManager = (event: KeyboardEvent | TouchEvent) => {
   //Disabled the timer fonction on input tag
   if ((event.target as HTMLElement).tagName === 'INPUT') {
     return;
@@ -437,8 +437,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('keyup', keyUpSpaceManager);
   window.removeEventListener('keydown', keyDownSpaceManager);
   window.removeEventListener('keydown', onKeyDownEnter);
-  document.getElementById('playground')!.removeEventListener('pointerup', timerUpManager);
-  document.getElementById('playground')!.removeEventListener('pointerdown', timerDownManager);
+  document.getElementById('head-info')!.removeEventListener('touchend', timerUpManager);
+  document.getElementById('head-info')!.removeEventListener('touchstart', timerDownManager);
 });
 
 </script>
