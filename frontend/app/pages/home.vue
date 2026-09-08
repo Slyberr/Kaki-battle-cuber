@@ -1,33 +1,36 @@
 <template>
 
-  <UPageHero title="Bienvenue sur KBC!"
+  <UPageHero class="h-full" title="Bienvenue sur KBC!"
     description="Kaki-battle-cuber vous permet de créer une room privée instantanément, sans compte ! Affrontez vos amis sur des épreuves officielles, ou non !"
     headline="v0.1">
 
     <!--- Créer une room-->
+    
     <UModal>
       <div class="flex justify-center">
-        <UButton class="relative" icon="lucide:plus" label="Créer une nouvelle room" />
+        <UButton class="" icon="lucide:plus" label="Créer une nouvelle room" />
       </div>
       <template #content>
-        <UForm :schema="schema" :state="state" class="flex flex-col m-8 space-y-4 h-full overflow-scroll" @submit="createRoom">
-          <UFormField class="h-18" label="Nom de la salle" name="roomname">
+        <UForm :schema="schema" :state="state" class="relative flex flex-col m-8 space-y-6 " @submit="createRoom">
+          <UFormField class="h-20" label="Nom de la salle" name="roomname">
             <UInput v-model="state.roomname"></UInput>
           </UFormField>
-          <UFormField class="h-18" label="Votre pseudo" name="pseudo">
+          <UFormField class="h-20" label="Votre pseudo" name="pseudo">
             <UInput type="input" v-model="state.pseudo"></UInput>
           </UFormField>
-          <UFormField  label="Privée ?" name="prive">
-            <UCheckbox v-model="state.isPrivate"></UCheckbox>
-          </UFormField>
+          <div class="flex mb-10">
+            <UFormField label="Privée ?" name="prive">
+              <UCheckbox v-model="state.isPrivate"></UCheckbox>
+            </UFormField>
 
-          <Transition>
-            <div v-if="state.isPrivate">
-              <UFormField class="h-20" label="Mot de passe" name="password">
+            <div v-show="state.isPrivate">
+              <UFormField class="absolute right-10" label="Mot de passe" name="password">
                 <UInput type="password" v-model="state.password"></UInput>
               </UFormField>
             </div>
-          </Transition>
+          </div>
+
+
           <UButton type="submit" class="relative flex self-start ">Créer et accéder à la salle</UButton>
         </UForm>
       </template>
@@ -47,12 +50,12 @@
               <div class="grid grid-cols-[3fr_3fr_1fr] w-full py-5">
                 <div class="flex items-center gap-4">
                   <p class="self-center">{{ room.roomName }} ({{ mapEvent.get(room.currentEvent)?.toDisplay }}) </p>
-                  <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'"/>
+                  <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'" />
                 </div>
 
                 <div class="flex items-center gap-2">
                   <p>{{ room.length }}</p>
-                  <UIcon name="lucide:users"/>
+                  <UIcon name="lucide:users" />
                 </div>
                 <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
               </div>
@@ -81,7 +84,7 @@
 import * as v from 'valibot';
 import { mapEvent, type EventID } from '~/types/solve';
 
-const rooms = useState<{ roomName: string, isPrivate: boolean,currentEvent : EventID; length: number }[]>('rooms');
+const rooms = useState<{ roomName: string, isPrivate: boolean, currentEvent: EventID; length: number }[]>('rooms');
 
 const state = reactive<{ roomname: string, isPrivate: false, password: string, pseudo: string }>({
   roomname: '',

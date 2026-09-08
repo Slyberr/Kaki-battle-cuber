@@ -6,7 +6,7 @@
     <div class="text-2xl text-center sm:text-3xl lg:text-4xl transition ease-linear" :class=timer.color>{{
       timer.timeDisplayed }}</div>
 
-    <div class="absolute top-15 flex justify-center gap-2"
+    <div class="absolute top-20 flex justify-center gap-2"
       v-if="timer.state === 'CONFIRM' || timer.state === 'WAITING_OTHER'">
       <URadioGroup v-model:model-value="penalitySelected" :items="radioSolvePenalities"
         :disabled="inspectionPenality === 'DNF' || timer.state === 'WAITING_OTHER'" variant="card" indicator="hidden"
@@ -110,8 +110,6 @@ onMounted(() => {
   document.getElementById('playground')!.addEventListener('pointerdown', timerDownManager);
 });
 
-
-
 //UTILS don't want to make a utils/UseKeyXSpaceManager beacause lot of variables to send.
 const keyDownSpaceManager = (event: KeyboardEvent) => {
   if (event.code === 'Space') {
@@ -119,15 +117,11 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
   }
 };
 
-
-
 const keyUpSpaceManager = (event: KeyboardEvent) => {
   if (event.code === 'Space') {
     timerUpManager(event);
   }
 };
-
-
 
 const timerDownManager = (event: KeyboardEvent | PointerEvent) => {
 
@@ -187,8 +181,6 @@ const timerDownManager = (event: KeyboardEvent | PointerEvent) => {
   };
 
 }
-
-
 
 const timerUpManager = (event: KeyboardEvent | PointerEvent) => {
   //Disabled the timer fonction on input tag
@@ -332,8 +324,9 @@ const beginInspection = () => {
 
         timer.timeDisplayed = inspectionValue.value.toString();
       } else {
-        clearInterval(inspectionId.value);
         timer.state = 'CONFIRM';
+        emits('playerChangeState', 'CONFIRMATION');
+        clearInterval(inspectionId.value); 
       }
     }, 1000);
   }
