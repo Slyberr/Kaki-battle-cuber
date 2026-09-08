@@ -100,8 +100,12 @@ onMounted(() => {
 //UTILS don't want to make a utils/UseKeyXSpaceManager beacause lot of variables to send.
 
 const keyUpSpaceManager = (event: KeyboardEvent) => {
-
   if (event.code === 'Space') {
+    //Disabled the timer fonction on input tag
+    if ((event.target as HTMLElement).tagName === 'INPUT') {
+      return;
+    }
+
     if (props.inputMode === 'KEYBOARD') {
       switch (timer.state) {
         case 'BEGIN_STATE':
@@ -226,12 +230,14 @@ const keyDownSpaceManager = (event: KeyboardEvent) => {
 };
 
 const onKeyDownEnter = (event: KeyboardEvent) => {
-  if (event.code === 'Enter'
+  if ((event.code === 'Enter' || event.code === 'NumpadEnter')
     && ((props.inputMode === 'KEYBOARD' && timer.state === 'CONFIRM')
       || (props.inputMode === 'MANUALLY' && props.activeInspection && timer.state === 'CONFIRM')
       || (props.inputMode === 'MANUALLY' && !props.activeInspection && timer.state === 'BEGIN_STATE')
     )
-  ) {
+    &&
+    (event.target as HTMLElement).tagName !== 'INPUT')
+  {
     saveTime();
   }
 };
@@ -284,7 +290,7 @@ const beginInspection = () => {
           await playAudioInspection(props.audios[3]!);
         }
 
-        
+
         timer.timeDisplayed = inspectionValue.value.toString();
       } else {
         clearInterval(inspectionId.value);
@@ -392,6 +398,10 @@ watch(() => penalitySelected.value, async (newVal) => {
 
 
 onUnmounted(() => {
+  //fix #55
+  clearInterval(inspectionId.value);
+  clearInterval(holdingSpaceId.value);
+  clearInterval(timerIntervalId.value);
   window.removeEventListener('keyup', keyUpSpaceManager);
   window.removeEventListener('keydown', keyDownSpaceManager);
   window.removeEventListener('keydown', onKeyDownEnter);

@@ -1,132 +1,151 @@
-import type { DropdownMenuItem } from "@nuxt/ui/runtime/components/DropdownMenu.vue.js";
-import type { Socket } from "socket.io-client";
-import type { Player } from "~/types/player";
+import type { DropdownMenuItem } from '@nuxt/ui/runtime/components/DropdownMenu.vue.js';
+import type { Socket } from 'socket.io-client';
+import type { Player } from '~/types/player';
 
 /**
  * Give the dropdownMenu option
- * @param readyHoldingTime 
- * @param inspection 
- * @param inputMode 
+ * @param readyHoldingTime
+ * @param inspection
+ * @param inputMode
  * @param audioForInspection
- * @param socket 
- * @param roomName 
- * @param me 
+ * @param socket
+ * @param roomName
+ * @param me
  * @param roomPlayers
- * @returns 
+ * @returns
  */
 export const useGetDropDownMenu = (
   readyHoldingTime: Ref<Number>,
   inspection: Ref<boolean>,
-  inputMode : Ref<"KEYBOARD" | "MANUALLY">,
-  audioForInspection : Ref<string[]>,
+  inputMode: Ref<'KEYBOARD' | 'MANUALLY'>,
+  audioForInspection: Ref<string[]>,
   socket: Socket,
   roomName: Ref<string>,
   me: Ref<Player>,
-  roomPlayers: Ref<Player[]>
+  roomPlayers: Ref<Player[]>,
 ): DropdownMenuItem[][] => {
-
-
   const playersToexpulseMenu = [];
-  for (let i = 0;i<roomPlayers.value.length;i++) {
-    if (roomPlayers.value[i]?.id !== me.value.id){
-      playersToexpulseMenu.push(
-        {
-          label : roomPlayers.value[i]?.pseudo,
-          onSelect : () => {
-            socket.emit('kick-player',roomName.value,roomPlayers.value[i]?.id);
-          }
-        }
-      )
+  for (let i = 0; i < roomPlayers.value.length; i++) {
+    if (roomPlayers.value[i]?.id !== me.value.id) {
+      playersToexpulseMenu.push({
+        label: roomPlayers.value[i]?.pseudo,
+        onSelect: () => {
+          socket.emit('kick-player', roomName.value, roomPlayers.value[i]?.id);
+        },
+      });
     }
   }
 
   const menuForEveryone: DropdownMenuItem[][] = [
     [
       {
-        label: `Enter le temps (${inputMode.value === 'KEYBOARD' ? 'Au clavier' : 'Manuellement'})` ,
+        label: `Mode du chronomètre (${inputMode.value === 'KEYBOARD' ? 'Clavier' : 'Manuel'})`,
         icon: 'lucide:keyboard',
         children: [
           {
-            label: 'Au Clavier (barre espace)',
+            label: 'Clavier (barre espace)',
             onSelect: () => {
-                inputMode.value = 'KEYBOARD';
-            }
-          },
-          {
-            label: 'Manuellement',
-            onSelect : () => {
-                inputMode.value = "MANUALLY";
-            }
-          },
-        ],
-      },
-      {
-        label: `Presser la barre espace pendant... (${readyHoldingTime.value}s)`,
-        icon: 'lucide:timer',
-        children: [
-          {
-            label: '0 seconde (déclencher dès la touche pressée)',
-            onSelect: () => {
-              readyHoldingTime.value = 0;
+              inputMode.value = 'KEYBOARD';
             },
           },
           {
-            label: '0.3 seconde',
+            label: 'Manuel',
             onSelect: () => {
-              readyHoldingTime.value = 0.3;
-            },
-          },
-          {
-            label: '0.55 seconde (Stackmat)',
-            onSelect: () => {
-              readyHoldingTime.value = 0.55;
-            },
-          },
-          {
-            label: '1 seconde',
-            onSelect: () => {
-              readyHoldingTime.value = 1;
+              inputMode.value = 'MANUALLY';
             },
           },
         ],
       },
       {
-        label: `Activer/Désactiver l'inspection (${inspection.value ? 'Activée' : 'Désactivée'})`,
-        icon: 'lucide:timer-off',
-        onSelect: () => {
-          inspection.value = !inspection.value;
-        },
-      },
-      {
-        label : `Voix pour l'inspection (${audioForInspection.value[0]})`,
-        icon : 'lucide:volume-2',
+        label : 'Presser la barre espace pendant...',
+        icon: 'lucide:clock-check',
+        disabled : inputMode.value === 'MANUALLY',
         children : [
           {
-            label : 'Rien',
-            onSelect : () => {
-              audioForInspection.value = ['Rien','rien'];
-            }
+          label: '0 seconde (déclencher dès la touche pressée)',
+          onSelect: () => {
+            readyHoldingTime.value = 0;
+          },
+        },
+        {
+          label: '0.3 seconde',
+          onSelect: () => {
+            readyHoldingTime.value = 0.3;
+          },
+        },
+        {
+          label: '0.55 seconde (Stackmat)',
+          onSelect: () => {
+            readyHoldingTime.value = 0.55;
+          },
+        },
+        {
+          label: '1 seconde',
+          onSelect: () => {
+            readyHoldingTime.value = 1;
+          },
+        },  
+      ]
+      },
+      {
+        label: `Inspection (${inspection.value ? 'Activée' : 'Désactivée'})`,
+        icon: 'lucide:hourglass',
+
+        children: [
+          {
+            label: `Activer/Désactiver (${inspection.value ? 'Activée' : 'Désactivée'})`,
+            onSelect: () => {
+              inspection.value = !inspection.value;
+            },
           },
           {
-            label : '8/12',
-            onSelect : () => {
-              audioForInspection.value = ['8/12','8-12','8-louis.wav','12-louis.wav'];
-            }
+            label: `Voix pour l'inspection (${audioForInspection.value[0]})`,
+            icon: 'lucide:volume-2',
+            disabled : !inspection.value,
+            children: [
+              {
+                label: 'Rien',
+                onSelect: () => {
+                  audioForInspection.value = ['Rien', 'rien'];
+                },
+              },
+              {
+                label: '8/12',
+                onSelect: () => {
+                  audioForInspection.value = [
+                    '8/12',
+                    '8-12',
+                    '8-louis.wav',
+                    '12-louis.wav',
+                  ];
+                },
+              },
+              {
+                label: '8/12 secondes',
+                onSelect: () => {
+                  audioForInspection.value = [
+                    '8/12 secondes',
+                    '8-12-sec',
+                    '8-sec-louis.wav',
+                    '12-sec-louis.wav',
+                  ];
+                },
+              },
+              {
+                label: '8/12 secondes Polonais by Le Peuneuj Roux',
+                onSelect: () => {
+                  audioForInspection.value = [
+                    '8/12 secondes en polonais by le Peuneuj Roux',
+                    '8-12-sec-pol-peuneuj',
+                    '8-peuneuj.wav',
+                    '12-peuneuj.wav',
+                  ];
+                },
+              },
+            ],
           },
-          {
-            label : '8/12 secondes',
-            onSelect : () => {
-              audioForInspection.value = ['8/12 secondes','8-12-sec','8-sec-louis.wav','12-sec-louis.wav'];
-            }
-          },
-          {
-            label : '8/12 secondes Polonais by Le Peuneuj Roux',
-            onSelect : () => {
-              audioForInspection.value = ['8/12 secondes en polonais by le Peuneuj Roux','8-12-sec-pol-peuneuj','8-peuneuj.wav','12-peuneuj.wav'];
-            }
-          }
-        ]
-      }
+        ],
+      },
     ],
   ];
   if (me.value.owner) {
@@ -248,9 +267,9 @@ export const useGetDropDownMenu = (
       },
       {
         label: 'Exclure',
-        disabled : playersToexpulseMenu.length === 0 ? true : false,
+        disabled: playersToexpulseMenu.length === 0 ? true : false,
         icon: 'lucide:user-x',
-        children : playersToexpulseMenu
+        children: playersToexpulseMenu,
       },
     ]);
   }

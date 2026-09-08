@@ -28,8 +28,12 @@
       <p class="text-2xl">{{ puzzle }}</p>
       <p class="text-center max-w-[max(50%,600px)] h-20 ">{{ scramble }}</p>
 
-      <Timer class="mt-10" :local-player-state="localPlayerState" :ready-holding-time="readyHoldingTime"
-        :active-inspection="inspection" :input-mode="inputMode" :audios="audiosForInspection"
+      <Timer class="mt-10" 
+        :local-player-state="localPlayerState" 
+        :ready-holding-time="readyHoldingTime"
+        :active-inspection="inspection" 
+        :input-mode="inputMode"
+        :audios="audiosForInspection"
         @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
         @time-sended="(time: number,inspectionPenality : string,penalitySelected : string) => sendTime(time,inspectionPenality,penalitySelected)" />
 
