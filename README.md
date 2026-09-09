@@ -1,5 +1,10 @@
-Projet pour faire s'affronter des speedcuber en ligne.
+Kaki Cube Battle est une application web réalisée en Nuxt.js avec Socket.io pour la transmission des données.
 
-Projet réalisé avec le framework Nuxt.js /frontend qui contient l'application et le serveur.
+Cette application permet de créer des salles privées ou publiques afin de pouvoir faire s'affronter des Speedcubeurs sur n'importe quelle épreuve WCA.
 
-Ce serveur utilise exclusivement socket.io pour la transmission de data.
+
+Le principal avantage est que l'utilisation du site ne nécessite aucun compte pour pouvoir totalement l'utiliser.
+
+
+
+
