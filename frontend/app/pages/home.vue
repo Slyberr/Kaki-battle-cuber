@@ -5,12 +5,12 @@
     headline="v0.1">
 
     <!--- Créer une room-->
-    
-    <UModal>
+
+    <UModal title="Créer une salle">
       <div class="flex justify-center">
         <UButton class="" icon="lucide:plus" label="Créer une nouvelle room" />
       </div>
-      <template #content>
+      <template #body>
         <UForm :schema="schema" :state="state" class="relative flex flex-col m-8 space-y-6 " @submit="createRoom">
           <UFormField class="h-20" label="Nom de la salle" name="roomname">
             <UInput v-model="state.roomname"></UInput>
@@ -37,16 +37,17 @@
     </UModal>
 
     <!--- Rejoindre une room-->
-    <UModal>
-      <div class="flex justify-center">
-        <UButton class="relative" icon="lucide:users" label="Rejoindre une room" />
-      </div>
-      <template #content>
-        <div class="overflow-auto h-full">
-          <p class="text-xl m-2">{{ (rooms.length) }} Rooms actives</p>
-          <div class="flex" v-for="room in rooms">
+    <template v-if="rooms">
+      <UModal
+        :title="`Rejoindre une salle (${rooms.length} salle${rooms.length > 1 ? 's' : ''} active${rooms.length > 1 ? 's' : ''})`">
+        <div class="flex justify-center">
+          <UButton class="relative" icon="lucide:users" label="Rejoindre une room" />
+        </div>
+        <template #body>
+          <div class="overflow-auto h-full">
 
-            <UModal class="px-3">
+            <div class="flex flex-col" v-for="room in rooms">
+
               <div class="grid grid-cols-[3fr_3fr_1fr] w-full py-5">
                 <div class="flex items-center gap-4">
                   <p class="self-center">{{ room.roomName }} ({{ mapEvent.get(room.currentEvent)?.toDisplay }}) </p>
@@ -57,30 +58,35 @@
                   <p>{{ room.length }}</p>
                   <UIcon name="lucide:users" />
                 </div>
-                <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
-              </div>
-              <template #content>
-                <p class="text-center text-xl">{{ room.roomName }}</p>
-                <UForm :schema="schemaJoin" :state="stateJoin" class="m-8 space-y-4" @submit="joinRoom(room.roomName)">
+                <UModal class="px-3" :title="`Rejoindre la salle ${room.roomName}`">
+                  <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
+                  <template #body>
+                    <UForm :schema="schemaJoin" :state="stateJoin" class="m-8 space-y-4"
+                      @submit="joinRoom(room.roomName)">
 
-                  <UFormField label="Votre pseudo" name="pseudo">
-                    <UInput type="input" v-model="stateJoin.pseudo"></UInput>
-                  </UFormField>
-                  <UFormField v-if="room.isPrivate" label="Mot de passe" name="password">
-                    <UInput type="password" v-model="stateJoin.password"></UInput>
-                  </UFormField>
-                  <UButton type="submit">Accéder à la salle</UButton>
-                </UForm>
-              </template>
-            </UModal>
+                      <UFormField label="Votre pseudo" name="pseudo">
+                        <UInput type="input" v-model="stateJoin.pseudo"></UInput>
+                      </UFormField>
+                      <UFormField v-if="room.isPrivate" label="Mot de passe" name="password">
+                        <UInput type="password" v-model="stateJoin.password"></UInput>
+                      </UFormField>
+                      <UButton type="submit">Accéder à la salle</UButton>
+                    </UForm>
+                  </template>
+                </UModal>
+              </div>
+              <USeparator />
+            </div>
+
           </div>
-        </div>
-      </template>
-    </UModal>
+        </template>
+      </UModal>
+    </template>
   </UPageHero>
 </template>
 
 <script setup lang="ts">
+import { separator } from '#build/ui';
 import * as v from 'valibot';
 import { mapEvent, type EventID } from '~/types/solve';
 

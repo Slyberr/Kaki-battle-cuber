@@ -1,50 +1,63 @@
 <template>
 
   <UApp>
-    <UHeader mode="drawer" >
+    <UHeader mode="drawer">
       <template #title>
         <NuxtLink to="/home">
           <NuxtImg src="/kbc.svg" width="35" />
         </NuxtLink>
       </template>
-      <UNavigationMenu :items="center" variant="link" />
+
+      <UModal  title="Faire un retour">
+        <UButton variant="ghost" class="text-muted" icon="lucide:pencil" label="Faire un retour" ></UButton>
+        <template #body>
+          <FeedBack />
+        </template>
+      </UModal>
+
+
+      <UModal  title="Réaliser un don">
+        <UButton variant="ghost" class="text-muted" icon="lucide:piggy-bank" label="Réaliser un don" ></UButton>
+        <template #content>
+          <FeedBack />
+        </template>
+      </UModal>
+
       <template #body>
-        <UNavigationMenu orientation="vertical" :items="center" variant="link" />
+        <UModal  title="Faire un retour">
+          <UButton variant="ghost" class="text-muted" icon="lucide:pencil" label="Faire un retour"></UButton>
+          <template #body>
+            <FeedBack />
+          </template>
+        </UModal>
+        <UModal  title="Réaliser un don">
+          <UButton variant="ghost" class="text-muted" icon="lucide:piggy-bank" label="Réaliser un don"></UButton>
+          <template #body>
+            <FeedBack />
+          </template>
+        </UModal>
+
       </template>
-      
     </UHeader>
 
     <UMain>
       <NuxtRouteAnnouncer />
       <NuxtPage />
     </UMain>
-      
+
   </UApp>
 
 </template>
 
 
 <script setup lang="ts">
-import { type NavigationMenuItem } from '@nuxt/ui';
 import type { EventID } from './types/solve';
+import FeedBack from './components/feedBack.vue';
 
 const rooms = useState<{ roomName: string, isPrivate: boolean, currentEvent: EventID; length: number }[]>('rooms');
 const socket = useSocket();
 const errorToast = useToast();
-const center = ref<NavigationMenuItem[]>([
-  {
-    label: 'Faire un retour',
-    icon: 'lucide:pencil',
-    to: '/more/feedback',
-    target : '_blank'
-  },
-  {
-    label: 'Faire une donation',
-    icon: 'lucide:piggy-bank',
-    disabled: true,
-    target : '_blank'
-  },
-])
+
 
 //theme dark is for everyone on 1.0.
 const colorMode = useColorMode();
