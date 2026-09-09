@@ -1,7 +1,7 @@
 <template>
 
-  <UPageHero class="h-full" title="Bienvenue sur KBC!"
-    description="Kaki-battle-cuber vous permet de créer une room privée instantanément, sans compte ! Affrontez vos amis sur des épreuves officielles, ou non !"
+  <UPageHero class="h-full" title="Bienvenue sur KCB !"
+    description="Kaki Cube Battle est un projet open source qui permet de créer une salle instantanément et sans compte !  Créez des salles privées ou publiques et affrontez vos amis sur toutes les épreuves WCA."
     headline="v0.1">
 
     <!--- Créer une room-->

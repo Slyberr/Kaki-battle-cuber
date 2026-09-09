@@ -23,5 +23,9 @@ import type { NuxtError } from '#app';
 
 const props = defineProps<{ error: NuxtError }>()
 
+useHead({
+  title: 'Erreur ' + props.error.status + '!'
+});
+
 
 </script>

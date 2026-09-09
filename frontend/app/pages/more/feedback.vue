@@ -28,7 +28,9 @@ const formData = reactive<{mail : string, text : string,type : string}>({
     text : '',
     type : 'Bug'
 })
-
+useHead({
+  title: 'KCB | Feedback' 
+});
 
 
 

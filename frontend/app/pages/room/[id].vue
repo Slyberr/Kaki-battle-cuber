@@ -105,7 +105,7 @@ definePageMeta({
 });
 
 useHead({
-  title: roomName.value as string
+  title: 'KCB | Salle ' + roomName.value as string
 });
 
 //Instant ask at server
