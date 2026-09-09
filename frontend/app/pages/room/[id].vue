@@ -1,43 +1,37 @@
 <template>
-  <UHeader title="KakiBattle">
-    <template #left>
-      <UModal>
-        <UButton color="primary" variant="ghost" label="Retour" icon="lucide:arrow-left" />
-        <template #content="{ close }">
-          <div class="flex flex-col p-8 w-full gap-10 items-center justify-between">
-            <p>En quittant la room, vous serez indirectement éjectée et vos scores seront supprimés. Partir ? </p>
-            <div class="flex justify-between w-[50%]">
-              <UButton class="w-20" label="Oui" @click="leaveRoom()" icon="lucide:check" />
-              <UButton class="w-20" label="Non" @click="close" icon="lucide:x" />
-            </div>
-          </div>
-        </template>
-      </UModal>
+  <UModal>
+    <UButton color="primary" variant="ghost" label="Retour" icon="lucide:arrow-left" />
+    <template #content="{ close }">
+      <div class="flex flex-col p-8 w-full gap-10 items-center justify-between">
+        <p>En quittant la room, vous serez indirectement éjectée et vos scores seront supprimés. Partir ? </p>
+        <div class="flex justify-between w-[50%]">
+          <UButton class="w-20" label="Oui" @click="leaveRoom()" icon="lucide:check" />
+          <UButton class="w-20" label="Non" @click="close" icon="lucide:x" />
+        </div>
+      </div>
     </template>
-    <template #body>
-      <p>KakiTimer</p>
-    </template>
-  </UHeader>
+  </UModal>
 
   <div class="flex flex-col">
     <div>
-      <div v-if="me" id="playground" class="flex flex-col items-center gap-4 w-full">
-        <h1 class="flex text-center text-3xl">{{ roomName }}</h1>
+      <div v-if="me" class="flex flex-col items-center gap-4 w-full">
+        <div id="head-info" class="flex flex-col text-center w-full">
+          <h1 class="text-3xl">{{ roomName }}</h1>
 
-        <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
-        <p class="text-2xl">{{ puzzle }}</p>
-        <p class="text-center max-w-[max(50%,600px)] m-2 text-xs sm:text-sm md:text-base 2xl:text-lg h-20 sm:h-28 md:h-32  ">{{ scramble }}</p>
+          <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
+          <p class="text-2xl">{{ puzzle }}</p>
+          <p
+            class="text-center m-2 text-xs sm:text-sm md:text-base 2xl:text-lg h-20 sm:h-28 md:h-32  ">
+            {{ scramble }}</p>
 
-
-        <div class="flex flex-col w-full">
-          <Timer class="mb-10 timer flex justify-center" :local-player-state="localPlayerState" :ready-holding-time="readyHoldingTime"
-            :active-inspection="inspection" :input-mode="inputMode" :audios="audiosForInspection"
-            @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state) }"
+             <Timer class="h-20 timer flex justify-center" :local-player-state="localPlayerState"
+            :ready-holding-time="readyHoldingTime" :active-inspection="inspection" :input-mode="inputMode"
+            :audios="audiosForInspection"
+            @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state); if (state === 'CONFIRMATION') { scramble = 'Confirmation du temps...' } }"
             @time-sended="(time: number, inspectionPenality: string, penalitySelected: string) => sendTime(time, inspectionPenality, penalitySelected)" />
-
-          <div id="twisty-container"
-            class="flex w-full justify-end" />
         </div>
+
+          <div id="twisty-container" class="flex w-full justify-end" />
       </div>
       <UDropdownMenu :items="dropDownItems" :disabled="!dropDownMenuEnabled">
         <UButton variant="ghost" class="self-start m-2" icon="lucide:settings" />
@@ -111,7 +105,7 @@ definePageMeta({
 });
 
 useHead({
-  title: roomName.value as string
+  title: 'KCB | Salle ' + roomName.value as string
 });
 
 //Instant ask at server
@@ -133,7 +127,7 @@ onMounted(() => {
       drawer.value.visualization = '2D';
       drawer.value.controlPanel = 'none';
       drawer.value.background = 'none';
-      drawer.value.classList.add('scale-60', 'sm:scale-70', 'lg:scale-80', 'xl:scale-90','2xl:scale-100');
+      drawer.value.classList.add('scale-60', 'sm:scale-70', 'lg:scale-80', 'xl:scale-90', '2xl:scale-100');
       const wrapper = document.getElementById('twisty-container')!;
       wrapper.appendChild(drawer.value);
     }
@@ -237,7 +231,7 @@ const leaveRoom = () => {
 };
 
 onBeforeUnmount(() => {
-   document.body.querySelector('twisty-player')?.remove();
+  document.body.querySelector('twisty-player')?.remove();
   socket.off("send-all-room-data");
   socket.off("players-updated");
   socket.off("remove-player");

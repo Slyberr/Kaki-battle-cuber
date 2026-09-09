@@ -1,87 +1,96 @@
 <template>
 
-  <UPageHero title="Bienvenue sur KBC!"
-    description="Kaki-battle-cuber vous permet de créer une room privée instantanément, sans compte ! Affrontez vos amis sur des épreuves officielles, ou non !"
+  <UPageHero class="h-full" title="Bienvenue sur KCB !"
+    description="Kaki Cube Battle est un projet open source qui permet de créer une salle instantanément et sans compte !  Créez des salles privées ou publiques et affrontez vos amis sur toutes les épreuves WCA."
     headline="v0.1">
 
     <!--- Créer une room-->
-    <UModal>
+
+    <UModal title="Créer une salle">
       <div class="flex justify-center">
-        <UButton class="relative" icon="lucide:plus" label="Créer une nouvelle room" />
+        <UButton class="" icon="lucide:plus" label="Créer une nouvelle room" />
       </div>
-      <template #content>
-        <UForm :schema="schema" :state="state" class="flex flex-col m-8 space-y-4 h-full overflow-scroll" @submit="createRoom">
-          <UFormField class="h-18" label="Nom de la salle" name="roomname">
+      <template #body>
+        <UForm :schema="schema" :state="state" class="relative flex flex-col m-8 space-y-6 " @submit="createRoom">
+          <UFormField class="h-20" label="Nom de la salle" name="roomname">
             <UInput v-model="state.roomname"></UInput>
           </UFormField>
-          <UFormField class="h-18" label="Votre pseudo" name="pseudo">
+          <UFormField class="h-20" label="Votre pseudo" name="pseudo">
             <UInput type="input" v-model="state.pseudo"></UInput>
           </UFormField>
-          <UFormField  label="Privée ?" name="prive">
-            <UCheckbox v-model="state.isPrivate"></UCheckbox>
-          </UFormField>
+          <div class="flex mb-10">
+            <UFormField label="Privée ?" name="prive">
+              <UCheckbox v-model="state.isPrivate"></UCheckbox>
+            </UFormField>
 
-          <Transition>
-            <div v-if="state.isPrivate">
-              <UFormField class="h-20" label="Mot de passe" name="password">
+            <div v-show="state.isPrivate">
+              <UFormField class="absolute right-10" label="Mot de passe" name="password">
                 <UInput type="password" v-model="state.password"></UInput>
               </UFormField>
             </div>
-          </Transition>
+          </div>
+
+
           <UButton type="submit" class="relative flex self-start ">Créer et accéder à la salle</UButton>
         </UForm>
       </template>
     </UModal>
 
     <!--- Rejoindre une room-->
-    <UModal>
-      <div class="flex justify-center">
-        <UButton class="relative" icon="lucide:users" label="Rejoindre une room" />
-      </div>
-      <template #content>
-        <div class="overflow-auto h-full">
-          <p class="text-xl m-2">{{ (rooms.length) }} Rooms actives</p>
-          <div class="flex" v-for="room in rooms">
+    <template v-if="rooms">
+      <UModal
+        :title="`Rejoindre une salle (${rooms.length} salle${rooms.length > 1 ? 's' : ''} active${rooms.length > 1 ? 's' : ''})`">
+        <div class="flex justify-center">
+          <UButton class="relative" icon="lucide:users" label="Rejoindre une room" />
+        </div>
+        <template #body>
+          <div class="overflow-auto h-full">
 
-            <UModal class="px-3">
+            <div class="flex flex-col" v-for="room in rooms">
+
               <div class="grid grid-cols-[3fr_3fr_1fr] w-full py-5">
                 <div class="flex items-center gap-4">
                   <p class="self-center">{{ room.roomName }} ({{ mapEvent.get(room.currentEvent)?.toDisplay }}) </p>
-                  <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'"/>
+                  <UIcon :name="room.isPrivate ? 'lucide:lock' : 'lucide:globe'" />
                 </div>
 
                 <div class="flex items-center gap-2">
                   <p>{{ room.length }}</p>
-                  <UIcon name="lucide:users"/>
+                  <UIcon name="lucide:users" />
                 </div>
-                <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
-              </div>
-              <template #content>
-                <p class="text-center text-xl">{{ room.roomName }}</p>
-                <UForm :schema="schemaJoin" :state="stateJoin" class="m-8 space-y-4" @submit="joinRoom(room.roomName)">
+                <UModal class="px-3" :title="`Rejoindre la salle ${room.roomName}`">
+                  <UButton class="relative" icon="lucide:arrow-up-right">Rejoindre</UButton>
+                  <template #body>
+                    <UForm :schema="schemaJoin" :state="stateJoin" class="m-8 space-y-4"
+                      @submit="joinRoom(room.roomName)">
 
-                  <UFormField label="Votre pseudo" name="pseudo">
-                    <UInput type="input" v-model="stateJoin.pseudo"></UInput>
-                  </UFormField>
-                  <UFormField v-if="room.isPrivate" label="Mot de passe" name="password">
-                    <UInput type="password" v-model="stateJoin.password"></UInput>
-                  </UFormField>
-                  <UButton type="submit">Accéder à la salle</UButton>
-                </UForm>
-              </template>
-            </UModal>
+                      <UFormField label="Votre pseudo" name="pseudo">
+                        <UInput type="input" v-model="stateJoin.pseudo"></UInput>
+                      </UFormField>
+                      <UFormField v-if="room.isPrivate" label="Mot de passe" name="password">
+                        <UInput type="password" v-model="stateJoin.password"></UInput>
+                      </UFormField>
+                      <UButton type="submit">Accéder à la salle</UButton>
+                    </UForm>
+                  </template>
+                </UModal>
+              </div>
+              <USeparator />
+            </div>
+
           </div>
-        </div>
-      </template>
-    </UModal>
+        </template>
+      </UModal>
+    </template>
   </UPageHero>
 </template>
 
 <script setup lang="ts">
+import { separator } from '#build/ui';
 import * as v from 'valibot';
 import { mapEvent, type EventID } from '~/types/solve';
 
-const rooms = useState<{ roomName: string, isPrivate: boolean,currentEvent : EventID; length: number }[]>('rooms');
+const rooms = useState<{ roomName: string, isPrivate: boolean, currentEvent: EventID; length: number }[]>('rooms');
 
 const state = reactive<{ roomname: string, isPrivate: false, password: string, pseudo: string }>({
   roomname: '',

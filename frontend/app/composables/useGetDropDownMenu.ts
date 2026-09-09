@@ -39,11 +39,11 @@ export const useGetDropDownMenu = (
   const menuForEveryone: DropdownMenuItem[][] = [
     [
       {
-        label: `Mode du chronomètre (${inputMode.value === 'KEYBOARD' ? 'Clavier/Souris' : 'Manuel'})`,
+        label: `Mode du chronomètre (${inputMode.value === 'KEYBOARD' ? 'Clavier/Touch' : 'Manuel'})`,
         icon: 'lucide:keyboard',
         children: [
           {
-            label: 'Clavier/Souris (barre espace)',
+            label: 'Clavier (barre espace)/Touch (mobile)',
             onSelect: () => {
               inputMode.value = 'KEYBOARD';
             },
