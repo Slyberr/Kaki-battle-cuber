@@ -17,6 +17,11 @@ export default defineNuxtConfig({
     },
   },
 
+  runtimeConfig : {
+    gmailUser : '',
+    gmailPassword: ''
+  },
+
   nitro: {
     experimental : {
       websocket : true
