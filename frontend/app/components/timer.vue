@@ -125,8 +125,8 @@ const keyUpSpaceManager = (event: KeyboardEvent) => {
 
 const timerDownManager = (event: KeyboardEvent | TouchEvent) => {
 
-  //exit if it's the tchat input -> can make whitespace.
-  if ((event.target as HTMLElement).tagName === 'INPUT') {
+  //exit if it's the tchat input or feedback form -> can make whitespace.
+  if ((event.target as HTMLElement).tagName === 'INPUT' || (event.target as HTMLElement).tagName === 'TEXTAREA'){
     return;
   }
 
@@ -183,8 +183,8 @@ const timerDownManager = (event: KeyboardEvent | TouchEvent) => {
 }
 
 const timerUpManager = (event: KeyboardEvent | TouchEvent) => {
-  //Disabled the timer fonction on input tag
-  if ((event.target as HTMLElement).tagName === 'INPUT') {
+  //exit if it's the tchat input or feedback form -> can make whitespace.
+  if ((event.target as HTMLElement).tagName === 'INPUT' || (event.target as HTMLElement).tagName === 'TEXTAREA'){
     return;
   }
 

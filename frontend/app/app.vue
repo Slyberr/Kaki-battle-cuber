@@ -16,12 +16,7 @@
       </UModal>
 
 
-      <UModal  title="Réaliser un don">
-        <UButton variant="ghost" class="text-muted" icon="lucide:piggy-bank" label="Réaliser un don" ></UButton>
-        <template #content>
-          <FeedBack />
-        </template>
-      </UModal>
+      <UButton variant="ghost" class="text-muted" icon="lucide:coffee" label="M'offrir un thé" href="https://buymeacoffee.com/slyber" target="_blank" ></UButton>
 
       <template #body>
         <UModal  title="Faire un retour">
@@ -44,6 +39,29 @@
       <NuxtRouteAnnouncer />
       <NuxtPage />
     </UMain>
+    
+    <UFooter>
+       <UModal  title="CGU">
+        <UButton variant="ghost" class="text-muted" label="CGU" ></UButton>
+        <template #content>
+         
+        </template>
+      </UModal>
+
+      <UModal  title="RGPD">
+        <UButton variant="ghost" class="text-muted"  label="RGPD" ></UButton>
+        <template #content>
+          
+        </template>
+      </UModal>
+
+      <UModal  title="Mentions légales">
+        <UButton variant="ghost" class="text-muted"  label="Mentions légales" ></UButton>
+        <template #body>
+          <Mentionslegales/>
+        </template>
+      </UModal>
+    </UFooter>
 
   </UApp>
 
@@ -53,6 +71,7 @@
 <script setup lang="ts">
 import type { EventID } from './types/solve';
 import FeedBack from './components/feedBack.vue';
+import Mentionslegales from './components/mentionslegales.vue';
 
 const rooms = useState<{ roomName: string, isPrivate: boolean, currentEvent: EventID; length: number }[]>('rooms');
 const socket = useSocket();

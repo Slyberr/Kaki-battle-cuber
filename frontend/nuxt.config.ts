@@ -18,8 +18,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig : {
-    gmailUser : '',
-    gmailPassword: ''
+    mailUser : '',
+    mailPassword: ''
   },
 
   nitro: {
