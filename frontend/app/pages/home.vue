@@ -115,26 +115,26 @@ const schemaJoin = computed(() => v.object({
   pseudo: v.pipe(v.string(), v.minLength(1, 'Une lettre au moins !'), v.maxLength(15, 'Maximum de 15 caractères')),
 }));
 
+const socket = useSocket();
+
 definePageMeta({
   middleware: [
     function (to, from) {
-      if (from.path.includes('/room/') && !to.query.return) {
-        const redirectToast = useToast();
-        redirectToast.add({
-          title: 'Redirection',
-          description: "Quelque chose d'inattendu s'est produit, vous avez été redirigé à l'accueil",
-          duration: 6000
-        })
+     
+      //if the user leave the room with navigator navigation arrow.
+      if (from.path.includes('/room/') && to.path === '/home') {
+        socket.emit('leave-room');
       }
     }
   ]
 });
 
-let socket = useSocket();
+
 
 onMounted(() => {
-  socket.on('go-to-room', (roomname : string) => {
-    navigateTo('/room/' + roomname);
+
+  socket.on('go-to-room', async(roomname : string) => {
+    await navigateTo('/room/' + roomname);
   });
 });
 

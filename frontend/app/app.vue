@@ -85,11 +85,10 @@ colorMode.preference = 'dark';
 
 onMounted(() => {
 
-  socket?.on('get-rooms', (therooms: { roomname: string, isPrivate: boolean, currentEvent: EventID; length: number }[]) => {
+  socket.on('get-rooms', (therooms: { roomname: string, isPrivate: boolean, currentEvent: EventID; length: number }[]) => {
     rooms.value = therooms;
-
   })
-  socket?.on('error', (data) => {
+  socket.on('error', (data) => {
     errorToast.add({
       title: 'Erreur !',
       description: data,
@@ -97,7 +96,7 @@ onMounted(() => {
     });
   });
 
-  socket?.on('removed', (data) => {
+  socket.on('removed', (data) => {
     errorToast.add({
       title: 'Vous avez été exclu de la room.',
       description: data,
@@ -105,10 +104,14 @@ onMounted(() => {
     });
     return navigateTo("/home?return=yes");
   });
+  
+  socket.emit('i-want-all-rooms');
 
 });
 
 onBeforeUnmount(() => {
   socket.off('get-rooms');
+  socket.off('error');
+  socket.off('removed');
 });
 </script>

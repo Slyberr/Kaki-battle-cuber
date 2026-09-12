@@ -3,11 +3,11 @@ import { Player, Room } from '../types/types.js';
 import { everyoneScored } from './everyoneScored.js';
 
 /**
- * Buisness logic when a user leave a room (by the normal case or disconnection)
+ * Buisness logic when a user leave a room (return button or disconnect or navgation arrow )
  * @param mySocket
  * @param roomname
  * @param rooms
- * @param roomname
+ * @param io
  * @param disconnected True if he leave or reload the page. False if he just leave the room.
  */
 export const leaveRoom = (
@@ -23,7 +23,8 @@ export const leaveRoom = (
   if (!disconnected) {
     mySocket.leave(roomname);
   }
-
+  mySocket.data.roomname = '';  
+  
 
   if (roomToManage) {
     let wasOwner = false;
@@ -61,18 +62,19 @@ export const leaveRoom = (
         roomToManage.players[0]!.owner = true;
       }
 
+      rooms.set(roomname, roomToManage);
       console.log('room', roomname, 'still standing. Players left : ');
       roomToManage.players.forEach((player) => console.log(player.pseudo));
+      //Stop display the leaver player and update the room.
+      io.to(roomname).emit('remove-player', roomToManage.players, mySocket.id);
     }
-
-    //Stop display the leaver player and update the room.
-    io.to(roomname).emit('remove-player', roomToManage.players, mySocket.id);
+    //Update rooms.
+    io.emit('get-rooms', displayRoomsForHomePage(rooms));
 
     //special case : everyone submit his time but last one disconnected.
     if (roomToManage.players.every((player) => player.state === 'SCORED')) {
       everyoneScored(rooms,roomname,io);
-    } else {
-      rooms.set(roomname, roomToManage);
-    }
+    } 
+
   }
 };

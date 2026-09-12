@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
       text: `${message} \n ${mail.length > 0 ? "Adresse mail de réponse: " + mail : "sans mail renseigné"}`,
     });
   } catch (e: any) {
-    console.log(e);
+   
     throw createError({
       statusCode: 500,
       message:

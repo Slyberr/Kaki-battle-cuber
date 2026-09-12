@@ -1,5 +1,10 @@
 import { EventID, Room } from '../types/types.js';
 
+/**
+ * update some useful infos to home.vue in order to have actual states of rooms (roomname, nbr players...)
+ * @param rooms 
+ * @returns 
+ */
 export const displayRoomsForHomePage = (rooms : Map<string,Room>) : { roomname: string;isPrivate : boolean;currentEvent: EventID, length: number }[] =>   {
   let res: { roomname: string;isPrivate : boolean;currentEvent: EventID, length: number }[] = [];
 

@@ -28,17 +28,16 @@ export default defineNitroPlugin((nitroApp) => {
     socket.data.roomname = '';
     console.log('new user :', socket.id);
 
-    //Instantly send rooms for home.vue
-
-    socket.emit('get-rooms', displayRoomsForHomePage(rooms));
-
+    //app.vue on he onMounted emit('i-want-all-rooms')
+    socket.on('i-want-all-rooms', () => {
+      socket.emit('get-rooms', displayRoomsForHomePage(rooms));
+    })
+    
     //Player disconnected
     socket.on('disconnect', () => {
       if (socket.data.roomname !== '') {
         const roomname = socket.data.roomname;
-        leaveRoom(socket, roomname, rooms, io, true);
-        //Emit to EVERYONE rooms updated
-        io.emit('get-rooms', displayRoomsForHomePage(rooms));
+        leaveRoom(socket, roomname, rooms, io, true);       
       }
 
       console.log('Bye', socket.id);
@@ -56,7 +55,6 @@ export default defineNitroPlugin((nitroApp) => {
         
         if (socket.data.roomname === '' && !rooms.has(room.roomname)) {
           //Create socket.io Room + rooms with data.
-          console.log(room);
           socket.join(room.roomname);
           socket.data.roomname = room.roomname;
 
@@ -152,7 +150,10 @@ export default defineNitroPlugin((nitroApp) => {
           event: room.event,
           actualSolveId: room.actualSolveId,
           allSolves: room.allSolves,
+          error:false,
         });
+      } else {
+        socket.emit('send-all-room-data', {error:true})
       }
     });
 
@@ -162,8 +163,6 @@ export default defineNitroPlugin((nitroApp) => {
       if (roomname) {
         leaveRoom(socket, roomname, rooms, io, false);
       }
-      //Emit to EVERYONE rooms updated
-      io.emit('get-rooms', displayRoomsForHomePage(rooms));
     });
 
     //When a player juste change his state (solving, inspecting...)
