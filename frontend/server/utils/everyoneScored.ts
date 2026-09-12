@@ -5,15 +5,15 @@ import { randomScrambleForEvent } from 'cubing/scramble';
 /**
  * Buisness logic when everyone in the room scored. 
  * @param rooms 
- * @param roomName 
+ * @param roomname 
  * @param io 
  */
 export const everyoneScored = async (
   rooms: Map<string, Room>,
-  roomName: string,
+  roomname: string,
   io: Server,
 ) => {
-  const room = rooms.get(roomName);
+  const room = rooms.get(roomname);
   if (room) {
     const newScramble = (
       await randomScrambleForEvent(room?.event ?? '333')
@@ -25,14 +25,14 @@ export const everyoneScored = async (
     room.actualScramble = newScramble;
     room.actualSolveId++;
     room.players.map((player) => (player.state = 'READY'));
-    io.to(roomName).emit('players-updated', room.players);
-    io.to(roomName).emit('nextSolve', {
+    io.to(roomname).emit('players-updated', room.players);
+    io.to(roomname).emit('nextSolve', {
       solveToDisplay: room.currentSolve,
       scramble: newScramble,
       solveId: room.actualSolveId,
     });
 
     room.currentSolve = { solveId: -1 };
-    rooms.set(roomName, room);
+    rooms.set(roomname, room);
   }
 };

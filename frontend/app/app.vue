@@ -8,24 +8,25 @@
         </NuxtLink>
       </template>
 
-      <UModal  title="Faire un retour">
-        <UButton variant="ghost" class="text-muted" icon="lucide:pencil" label="Faire un retour" ></UButton>
+      <UModal title="Faire un retour">
+        <UButton variant="ghost" class="text-muted" icon="lucide:pencil" label="Faire un retour"></UButton>
         <template #body>
           <FeedBack />
         </template>
       </UModal>
 
 
-      <UButton variant="ghost" class="text-muted" icon="lucide:coffee" label="M'offrir un thé" href="https://buymeacoffee.com/slyber" target="_blank" ></UButton>
+      <UButton variant="ghost" class="text-muted" icon="lucide:coffee" label="M'offrir un thé"
+        href="https://buymeacoffee.com/slyber" target="_blank"></UButton>
 
       <template #body>
-        <UModal  title="Faire un retour">
+        <UModal title="Faire un retour">
           <UButton variant="ghost" class="text-muted" icon="lucide:pencil" label="Faire un retour"></UButton>
           <template #body>
             <FeedBack />
           </template>
         </UModal>
-        <UModal  title="Réaliser un don">
+        <UModal title="Réaliser un don">
           <UButton variant="ghost" class="text-muted" icon="lucide:piggy-bank" label="Réaliser un don"></UButton>
           <template #body>
             <FeedBack />
@@ -39,26 +40,26 @@
       <NuxtRouteAnnouncer />
       <NuxtPage />
     </UMain>
-    
+
     <UFooter>
-       <UModal  title="CGU">
-        <UButton variant="ghost" class="text-muted" label="CGU" ></UButton>
+      <UModal title="CGU">
+        <UButton variant="ghost" class="text-muted" label="CGU"></UButton>
         <template #content>
-         
+
         </template>
       </UModal>
 
-      <UModal  title="RGPD">
-        <UButton variant="ghost" class="text-muted"  label="RGPD" ></UButton>
+      <UModal title="RGPD">
+        <UButton variant="ghost" class="text-muted" label="RGPD"></UButton>
         <template #content>
-          
+
         </template>
       </UModal>
 
-      <UModal  title="Mentions légales">
-        <UButton variant="ghost" class="text-muted"  label="Mentions légales" ></UButton>
+      <UModal title="Mentions légales">
+        <UButton variant="ghost" class="text-muted" label="Mentions légales"></UButton>
         <template #body>
-          <Mentionslegales/>
+          <Mentionslegales />
         </template>
       </UModal>
     </UFooter>
@@ -73,7 +74,7 @@ import type { EventID } from './types/solve';
 import FeedBack from './components/feedBack.vue';
 import Mentionslegales from './components/mentionslegales.vue';
 
-const rooms = useState<{ roomName: string, isPrivate: boolean, currentEvent: EventID; length: number }[]>('rooms');
+const rooms = useState<{ roomname: string, isPrivate: boolean, currentEvent: EventID; length: number }[]>('rooms');
 const socket = useSocket();
 const errorToast = useToast();
 
@@ -83,29 +84,28 @@ const colorMode = useColorMode();
 colorMode.preference = 'dark';
 
 onMounted(() => {
-  socket.on('connect', () => {
 
-    socket?.on('error', (data) => {
-      errorToast.add({
-        title: 'Erreur !',
-        description: data,
+  socket?.on('get-rooms', (therooms: { roomname: string, isPrivate: boolean, currentEvent: EventID; length: number }[]) => {
+    rooms.value = therooms;
 
-      });
-    });
-
-    socket?.on('removed', (data) => {
-      errorToast.add({
-        title: 'Vous avez été exclu de la room.',
-        description: data,
-
-      });
-      return navigateTo("/home?return=yes");;
-    });
-
-    socket?.on('get-rooms', (therooms: { roomName: string, isPrivate: boolean, currentEvent: EventID; length: number }[]) => {
-      rooms.value = therooms;
-    });
   })
+  socket?.on('error', (data) => {
+    errorToast.add({
+      title: 'Erreur !',
+      description: data,
+
+    });
+  });
+
+  socket?.on('removed', (data) => {
+    errorToast.add({
+      title: 'Vous avez été exclu de la room.',
+      description: data,
+
+    });
+    return navigateTo("/home?return=yes");
+  });
+
 });
 
 onBeforeUnmount(() => {

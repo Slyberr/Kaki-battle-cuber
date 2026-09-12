@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
 
 const sendMessage = () => {
    if (inputModel.value.trim().length !== 0) {
-      props.socket.emit('send-message', inputModel.value, props.roomname);
+      props.socket.emit('send-message', inputModel.value);
      
    }
    inputModel.value = '';

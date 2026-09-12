@@ -16,7 +16,7 @@
     <div>
       <div v-if="me" class="flex flex-col items-center gap-4 w-full">
         <div id="head-info" class="flex flex-col text-center w-full">
-          <h1 class="text-3xl">{{ roomName }}</h1>
+          <h1 class="text-3xl">{{ roomname }}</h1>
 
           <p v-if="me.owner">(Vous êtes le<i class="text-primary"> modérateur</i>)</p>
           <p class="text-2xl">{{ puzzle }}</p>
@@ -27,7 +27,7 @@
              <Timer class="h-20 timer flex justify-center" :local-player-state="localPlayerState"
             :ready-holding-time="readyHoldingTime" :active-inspection="inspection" :input-mode="inputMode"
             :audios="audiosForInspection"
-            @player-change-state="(state: PlayerState) => { socket.emit('change-state', roomName, state); if (state === 'CONFIRMATION') { scramble = 'Confirmation du temps...' } }"
+            @player-change-state="(state: PlayerState) => { socket.emit('change-state', state); if (state === 'CONFIRMATION') { scramble = 'Confirmation du temps...' } }"
             @time-sended="(time: number, inspectionPenality: string, penalitySelected: string) => sendTime(time, inspectionPenality, penalitySelected)" />
         </div>
 
@@ -42,7 +42,7 @@
       <TabBattle class="grow-8" v-if="roomPlayers.length > 0" :players="roomPlayers" :times="allSolves"
         :solve-id="actualSolveId" :me="me" />
 
-      <Tchatbox class="grow min-w-0" :me="me" :socket="socket" :roomname="(roomName as string)" />
+      <Tchatbox class="grow min-w-0" :me="me" :socket="socket" :roomname="(roomname as string)" />
     </div>
 
   </div>
@@ -63,7 +63,7 @@ import { mapEvent, type EventToDrawer, type Solve } from '~/types/solve.ts';
 const route = useRoute();
 const socket: Socket = useSocket();
 
-const roomName = ref<string | string[] | undefined>(route.params.id);
+const roomname = ref<string | string[] | undefined>(route.params.id);
 const roomPlayers = ref<Player[]>([]);
 const me = ref<Player>({ id: 'null', owner: false, pseudo: 'johndoe', state: 'READY' });
 const actualSolveId = ref<number>(1);
@@ -88,7 +88,7 @@ const dropDownItems = computed((): DropdownMenuItem[][] => {
     inputMode,
     audiosForInspection,
     socket,
-    roomName as Ref<string>,
+    roomname as Ref<string>,
     me,
     roomPlayers
   );
@@ -105,11 +105,11 @@ definePageMeta({
 });
 
 useHead({
-  title: 'KCB | Salle ' + roomName.value as string
+  title: 'KCB | Salle ' + roomname.value as string
 });
 
 //Instant ask at server
-socket.emit('i-want-room-data', roomName.value);
+socket.emit('i-want-room-data');
 
 //ALL LISTENERS SECTIONS
 
@@ -220,13 +220,13 @@ onMounted(() => {
 });
 
 const sendTime = (time: number, inspectionPenality: string, penalitySelected: string) => {
-  socket.emit('save-time', { roomName: roomName.value, time: time, inspectionPenality: inspectionPenality, penalitySelected: penalitySelected, solveId: actualSolveId.value });
+  socket.emit('save-time', { time: time, inspectionPenality: inspectionPenality, penalitySelected: penalitySelected, solveId: actualSolveId.value });
   localPlayerState.value = 'SCORED';
   scramble.value = 'Attente des autres joueurs...';
 };
 
 const leaveRoom = () => {
-  socket.emit("leave-room", roomName.value);
+  socket.emit("leave-room");
   return navigateTo("/home?return=yes");
 };
 

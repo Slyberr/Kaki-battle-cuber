@@ -4,7 +4,7 @@ import { everyoneScored } from './everyoneScored.js';
 
 /**
  * Buisneed logic when a player saving time.
- * @param roomName
+ * @param roomname
  * @param rooms
  * @param io
  * @param time
@@ -14,7 +14,7 @@ import { everyoneScored } from './everyoneScored.js';
  * @param solveId
  */
 export const saveTime = async (
-  roomName: string,
+  roomname: string,
   rooms: Map<string, Room>,
   io: Server,
   time: number,
@@ -23,7 +23,7 @@ export const saveTime = async (
   playerId: string,
   solveId: number,
 ) => {
-  const room = rooms.get(roomName);
+  const room = rooms.get(roomname);
 
   if (room) {
     const player = room.players.find((player: Player) => player.id === playerId);
@@ -50,12 +50,12 @@ export const saveTime = async (
       }
 
       player.state = 'SCORED';
-      rooms.set(roomName,room);
-      io.to(roomName).emit('players-updated', room.players);
+      rooms.set(roomname,room);
+      io.to(roomname).emit('players-updated', room.players);
 
       //If everyone in this room submit his time
       if (room.players.every((player) => player.state === 'SCORED')) {
-        everyoneScored(rooms,roomName,io);
+        everyoneScored(rooms,roomname,io);
       } 
     }
   }
